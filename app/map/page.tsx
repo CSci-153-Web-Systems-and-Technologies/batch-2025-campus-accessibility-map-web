@@ -26,10 +26,25 @@ export default function MapPage() {
       })
 
       const MapComponent = () => (
-        <MapContainer center={[40.7128, -74.0060]} zoom={15} className="h-full w-full">
+        <MapContainer 
+          center={[10.744397, 124.792071]} 
+          zoom={17} 
+          minZoom={17} 
+          maxZoom={18}
+          className="h-full w-full"
+          bounds={[
+            [10.735, 124.785],
+            [10.755, 124.800]
+          ]}
+          maxBounds={[
+            [10.730, 124.780],
+            [10.760, 124.805]
+          ]}
+          maxBoundsViscosity={1.0}
+        >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | VSU Campus Accessibility Map'
           />
         </MapContainer>
       )
