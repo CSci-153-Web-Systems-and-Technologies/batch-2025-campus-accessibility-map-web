@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { DashboardShell } from "@/components/dashboard-shell";
 import "./globals.css";
+import 'leaflet/dist/leaflet.css';
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
