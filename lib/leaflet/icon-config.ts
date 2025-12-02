@@ -1,6 +1,8 @@
-export function configureLeafletIcons() {
-  if (typeof window === 'undefined') return
+let iconsConfigured = false
 
+export function configureLeafletIcons() {
+  if (typeof window === 'undefined' || iconsConfigured) return
+  
   const L = require('leaflet')
   
   delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -10,6 +12,8 @@ export function configureLeafletIcons() {
     iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
   })
+  
+  iconsConfigured = true
 }
 
 export function createLeafletIcon(options?: {
@@ -37,4 +41,3 @@ export function createLeafletIcon(options?: {
     shadowAnchor: options?.shadowAnchor || [12, 41],
   })
 }
-

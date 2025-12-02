@@ -36,9 +36,9 @@ export function Sidebar() {
     <div className="group flex flex-col h-full border-r border-gray-200 bg-white overflow-hidden transition-[width] duration-300 w-16 hover:w-64">
       <nav className="flex-1 p-3 space-y-2">
         <Link
-          href="/map"
+          href="/"
           className={`${baseLinkClasses} ${
-            pathname === "/map"
+            pathname === "/"
               ? "bg-primary text-primary-foreground"
               : inactiveClasses
           }`}

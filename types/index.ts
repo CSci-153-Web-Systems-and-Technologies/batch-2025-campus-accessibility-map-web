@@ -1,31 +1,3 @@
-export {
-  FeatureType,
-  type FeatureComment,
-  type FeatureLike,
-  type UserProfile,
-  type BuildingInsert,
-  type AccessibilityFeatureInsert,
-  type FeaturePhotoInsert,
-  type FeatureCommentInsert,
-  type FeatureLikeInsert,
-  type UserProfileInsert,
-  type BuildingUpdate,
-  type AccessibilityFeatureUpdate,
-  type FeaturePhotoUpdate,
-  type FeatureCommentUpdate,
-  type UserProfileUpdate,
-  type Building as DBBuilding,
-  type AccessibilityFeature as DBAccessibilityFeature,
-  type FeaturePhoto as DBFeaturePhoto,
-} from './database'
-export {
-  type LatLng,
-  type MapBounds,
-  type MapBoundsArray,
-  type CampusMapConfig,
-  type AccessibilityFeature,
-  type Building,
-  type FeaturePhoto,
-  VSU_CAMPUS_CONFIG,
-} from './map'
+export * from './database'
+export * from './map'
 
