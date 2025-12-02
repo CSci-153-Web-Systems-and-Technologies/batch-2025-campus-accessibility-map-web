@@ -1,45 +1,38 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import dynamic from 'next/dynamic'
 import { Sidebar } from '@/components/sidebar'
-import { Suspense } from 'react'
+import { AddMarkerButton } from './AddMarkerButton'
+import { MarkerCreationProvider, useMarkerCreation } from './MarkerCreationContext'
+import { CreationModeOverlay } from './CreationModeOverlay'
+import { MarkerCreationModal } from './MarkerCreationModal'
+import { CampusMapWrapper } from './CampusMapWrapper'
 
-const CampusMap = dynamic(() => import('@/components/map/CampusMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-sm text-muted-foreground">Loading map...</p>
-      </div>
-    </div>
-  ),
-})
-
-export function MapLayout({
+function MapLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
   const hasOverlay = pathname === "/profile" || pathname === "/settings"
+  const { isCreating, isModalOpen, clickedCoordinates, closeModal } = useMarkerCreation()
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       <main className="flex-1 relative">
         <div className="absolute inset-0 z-0">
-          <Suspense fallback={
-            <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-sm text-muted-foreground">Loading map...</p>
-              </div>
-            </div>
-          }>
-            <CampusMap />
-          </Suspense>
+          <CampusMapWrapper />
+          {!hasOverlay && <AddMarkerButton />}
+          {isCreating && <CreationModeOverlay onCancel={closeModal} />}
+          {isModalOpen && clickedCoordinates && (
+            <MarkerCreationModal
+              isOpen={isModalOpen}
+              onClose={closeModal}
+              initialLat={clickedCoordinates[0]}
+              initialLng={clickedCoordinates[1]}
+            />
+          )}
         </div>
         {hasOverlay && (
           <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm overflow-y-auto">
@@ -55,5 +48,17 @@ export function MapLayout({
         )}
       </main>
     </div>
+  )
+}
+
+export function MapLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <MarkerCreationProvider>
+      <MapLayoutContent>{children}</MapLayoutContent>
+    </MarkerCreationProvider>
   )
 }

@@ -4,9 +4,13 @@ import { MapContainer, TileLayer } from 'react-leaflet'
 import { useEffect, useState } from 'react'
 import { VSU_CAMPUS_CONFIG } from '@/types/map'
 import { configureLeafletIcons } from '@/lib/leaflet/icon-config'
+import { MapClickHandler } from './MapClickHandler'
+import { useMarkerCreation } from './MarkerCreationContext'
+import { AccessibilityMarkers } from './AccessibilityMarkers'
 
 export default function CampusMap() {
   const [isMounted, setIsMounted] = useState(false)
+  const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -16,6 +20,13 @@ export default function CampusMap() {
 
   if (!isMounted) {
     return null
+  }
+
+  const handleMapClick = (coordinates: [number, number]) => {
+    if (isCreating) {
+      setClickedCoordinates(coordinates)
+      openModal()
+    }
   }
 
   return (
@@ -33,6 +44,8 @@ export default function CampusMap() {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | VSU Campus Accessibility Map'
       />
+      <MapClickHandler enabled={isCreating} onMapClick={handleMapClick} />
+      <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
     </MapContainer>
   )
 }
