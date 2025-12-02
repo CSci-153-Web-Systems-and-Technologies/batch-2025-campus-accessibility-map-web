@@ -1,0 +1,24 @@
+'use client'
+
+import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
+
+const CampusMap = dynamic(() => import('./CampusMap'), {
+  ssr: false,
+})
+
+export function CampusMapWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-sm text-muted-foreground">Loading map...</p>
+        </div>
+      </div>
+    }>
+      <CampusMap />
+    </Suspense>
+  )
+}
+
