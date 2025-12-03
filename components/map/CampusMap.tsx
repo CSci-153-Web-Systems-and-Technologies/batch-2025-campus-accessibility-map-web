@@ -11,6 +11,7 @@ import { useBuildingCreation } from './BuildingCreationContext'
 import { useBuilding } from './BuildingContext'
 import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
+import { MapControlInitializer } from './MapControlInitializer'
 import type { Building } from '@/types/map'
 
 export default function CampusMap() {
@@ -65,6 +66,7 @@ export default function CampusMap() {
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
       <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
       <BuildingsPolygons refreshTrigger={buildingsRefreshTrigger} onBuildingClick={handleBuildingClick} />
+      <MapControlInitializer />
     </MapContainer>
   )
 }

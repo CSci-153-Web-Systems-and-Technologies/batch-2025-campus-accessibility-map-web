@@ -13,6 +13,10 @@ import { MarkerCreationModal } from './MarkerCreationModal'
 import { BuildingCreationModal } from './BuildingCreationModal'
 import { BuildingFeaturesWindow } from './BuildingFeaturesWindow'
 import { CampusMapWrapper } from './CampusMapWrapper'
+import { BuildingSearch } from './BuildingSearch'
+import { FiltersDrawer } from './FiltersDrawer'
+import { MapFiltersProvider } from './MapFiltersContext'
+import { MapControlProvider } from './MapControlContext'
 
 function MapLayoutContent({
   children,
@@ -33,6 +37,8 @@ function MapLayoutContent({
           <CampusMapWrapper />
           {!hasOverlay && (
             <>
+              <BuildingSearch />
+              <FiltersDrawer />
               <AddMarkerButton />
               <AddBuildingButton />
             </>
@@ -93,7 +99,11 @@ export function MapLayout({
     <MarkerCreationProvider>
       <BuildingCreationProvider>
         <BuildingProvider>
-          <MapLayoutContent>{children}</MapLayoutContent>
+          <MapFiltersProvider>
+            <MapControlProvider>
+              <MapLayoutContent>{children}</MapLayoutContent>
+            </MapControlProvider>
+          </MapFiltersProvider>
         </BuildingProvider>
       </BuildingCreationProvider>
     </MarkerCreationProvider>
