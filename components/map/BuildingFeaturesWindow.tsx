@@ -8,17 +8,13 @@ import type { Building, AccessibilityFeature } from '@/types/map'
 import { FeatureType } from '@/types/database'
 import { useBuilding } from './BuildingContext'
 import { FeaturePhoto } from './FeaturePhoto'
+import { safeFetch } from '@/lib/fetch-utils'
+import type { ApiFeatureWithPhotos } from '@/types/database'
+import { formatFeatureType } from '@/lib/utils/feature-utils'
 
 interface BuildingFeaturesWindowProps {
   building: Building
   onClose: () => void
-}
-
-function formatFeatureType(type: FeatureType): string {
-  return type
-    .split('_')
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(' ')
 }
 
 export function BuildingFeaturesWindow({ building, onClose }: BuildingFeaturesWindowProps) {
@@ -27,35 +23,55 @@ export function BuildingFeaturesWindow({ building, onClose }: BuildingFeaturesWi
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!building.id) return
+
+    const abortController = new AbortController()
+
     async function fetchFeatures() {
       setIsLoading(true)
       setError(null)
 
-      try {
-        const response = await fetch(`/api/features?building_id=${building.id}&limit=100`)
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch features')
+      const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
+        `/api/features?building_id=${building.id}&limit=100`,
+        abortController.signal
+      )
+
+      if (fetchError) {
+        if (fetchError.name !== 'AbortError') {
+          console.error('Error fetching building features:', fetchError)
+          setError(fetchError.message)
         }
-
-        const result = await response.json()
-        const featuresData = (result.data || []).map((feature: any) => ({
-          ...feature,
-          coordinates: [feature.latitude, feature.longitude] as [number, number],
-          photos: feature.photos || [],
-        }))
-
-        setFeatures(featuresData)
-      } catch (err) {
-        console.error('Error fetching building features:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load features')
-      } finally {
         setIsLoading(false)
+        return
       }
+
+      if (data) {
+        const featuresData: AccessibilityFeature[] = data.map((feature) => ({
+          ...feature,
+          feature_type: feature.feature_type as FeatureType,
+          coordinates: [feature.latitude, feature.longitude] as [number, number],
+          photos: (feature.photos || []).map(photo => ({
+            id: photo.id,
+            feature_id: feature.id,
+            photo_url: photo.photo_url,
+            full_url: photo.full_url,
+            uploaded_by: '',
+            caption: null,
+            is_primary: photo.is_primary,
+            created_at: '',
+            deleted_at: null,
+          })),
+        }))
+        setFeatures(featuresData)
+      }
+
+      setIsLoading(false)
     }
 
-    if (building.id) {
-      fetchFeatures()
+    fetchFeatures()
+
+    return () => {
+      abortController.abort()
     }
   }, [building.id])
 
