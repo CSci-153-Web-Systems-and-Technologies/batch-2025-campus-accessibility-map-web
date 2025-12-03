@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react'
 import type { LatLng } from '@/types/map'
 
 interface BuildingCreationContextType {
@@ -26,38 +26,47 @@ export function BuildingCreationProvider({ children }: { children: ReactNode }) 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [buildingsRefreshTrigger, setBuildingsRefreshTrigger] = useState(0)
 
-  const openModal = () => {
+  const openModal = useCallback(() => {
     setIsModalOpen(true)
     setIsCreating(false)
-  }
+  }, [])
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false)
     setClickedCoordinates(null)
     setPolygonCoordinates(null)
     setIsCreating(false)
-  }
+  }, [])
 
-  const refreshBuildings = () => {
+  const refreshBuildings = useCallback(() => {
     setBuildingsRefreshTrigger(prev => prev + 1)
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    isCreating,
+    setCreating: setIsCreating,
+    clickedCoordinates,
+    setClickedCoordinates,
+    polygonCoordinates,
+    setPolygonCoordinates,
+    openModal,
+    closeModal,
+    isModalOpen,
+    refreshBuildings,
+    buildingsRefreshTrigger,
+  }), [
+    isCreating,
+    clickedCoordinates,
+    polygonCoordinates,
+    isModalOpen,
+    buildingsRefreshTrigger,
+    openModal,
+    closeModal,
+    refreshBuildings,
+  ])
 
   return (
-    <BuildingCreationContext.Provider
-      value={{
-        isCreating,
-        setCreating: setIsCreating,
-        clickedCoordinates,
-        setClickedCoordinates,
-        polygonCoordinates,
-        setPolygonCoordinates,
-        openModal,
-        closeModal,
-        isModalOpen,
-        refreshBuildings,
-        buildingsRefreshTrigger,
-      }}
-    >
+    <BuildingCreationContext.Provider value={contextValue}>
       {children}
     </BuildingCreationContext.Provider>
   )

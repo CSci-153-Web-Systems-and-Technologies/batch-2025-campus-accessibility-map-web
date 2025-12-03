@@ -93,4 +93,12 @@ export type FeaturePhotoUpdate = DatabaseUpdate<FeaturePhoto>
 export type FeatureCommentUpdate = DatabaseUpdate<FeatureComment>
 export type UserProfileUpdate = DatabaseUpdate<UserProfile>
 
-
+export type ApiFeatureWithPhotos = Omit<AccessibilityFeature, 'feature_type'> & {
+  feature_type: string
+  photos?: Array<{
+    id: string
+    photo_url: string
+    full_url?: string
+    is_primary: boolean
+  }>
+}

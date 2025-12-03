@@ -7,6 +7,9 @@ import { createReactIconMarker } from '@/lib/leaflet/react-icon-marker'
 import type { AccessibilityFeature } from '@/types/map'
 import { FeatureType } from '@/types/database'
 import { FeaturePhoto } from './FeaturePhoto'
+import { safeFetch } from '@/lib/fetch-utils'
+import type { ApiFeatureWithPhotos } from '@/types/database'
+import { formatFeatureType } from '@/lib/utils/feature-utils'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
@@ -32,13 +35,6 @@ function getMarkerIcon(featureType: FeatureType) {
   })
 }
 
-function formatFeatureType(type: FeatureType): string {
-  return type
-    .split('_')
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(' ')
-}
-
 export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -54,34 +50,54 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
   }, [])
 
   useEffect(() => {
+    const abortController = new AbortController()
+
     async function fetchFeatures() {
       setIsLoading(true)
       setError(null)
 
-      try {
-        const response = await fetch('/api/features?limit=100')
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch features')
+      const { data, error } = await safeFetch<ApiFeatureWithPhotos[]>(
+        '/api/features?limit=100',
+        abortController.signal
+      )
+
+      if (error) {
+        if (error.name !== 'AbortError') {
+          console.error('Error fetching features:', error)
+          setError(error.message)
         }
-
-        const result = await response.json()
-        const featuresData = (result.data || []).map((feature: any) => ({
-          ...feature,
-          coordinates: [feature.latitude, feature.longitude] as [number, number],
-          photos: feature.photos || [],
-        }))
-
-        setFeatures(featuresData)
-      } catch (err) {
-        console.error('Error fetching features:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load markers')
-      } finally {
         setIsLoading(false)
+        return
       }
+
+      if (data) {
+        const featuresData: AccessibilityFeature[] = data.map((feature) => ({
+          ...feature,
+          feature_type: feature.feature_type as FeatureType,
+          coordinates: [feature.latitude, feature.longitude] as [number, number],
+          photos: (feature.photos || []).map(photo => ({
+            id: photo.id,
+            feature_id: feature.id,
+            photo_url: photo.photo_url,
+            full_url: photo.full_url,
+            uploaded_by: '',
+            caption: null,
+            is_primary: photo.is_primary,
+            created_at: '',
+            deleted_at: null,
+          })),
+        }))
+        setFeatures(featuresData)
+      }
+
+      setIsLoading(false)
     }
 
     fetchFeatures()
+
+    return () => {
+      abortController.abort()
+    }
   }, [refreshTrigger])
 
   if (isLoading) {

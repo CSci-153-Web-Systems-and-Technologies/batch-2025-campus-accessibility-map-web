@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Polygon, Marker, useMap } from 'react-leaflet'
+import { Polygon, Marker } from 'react-leaflet'
 import { divIcon, Icon } from 'leaflet'
 import type { LatLng } from '@/types/map'
 
@@ -22,24 +22,22 @@ function createDefaultPolygon(centerLat: number, centerLng: number, size: number
   ]
 }
 
-function createCornerIcon(): Icon {
-  return divIcon({
-    html: `
-      <div style="
-        width: 16px;
-        height: 16px;
-        background-color: #3b82f6;
-        border: 2px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        cursor: move;
-      "></div>
-    `,
-    className: 'draggable-corner-marker',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  })
-}
+const CORNER_ICON = divIcon({
+  html: `
+    <div style="
+      width: 16px;
+      height: 16px;
+      background-color: #3b82f6;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      cursor: move;
+    "></div>
+  `,
+  className: 'draggable-corner-marker',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+})
 
 export function DraggableBuildingPolygonEditor({ 
   center, 
@@ -49,8 +47,6 @@ export function DraggableBuildingPolygonEditor({
   const [corners, setCorners] = useState<[number, number][]>(() => 
     createDefaultPolygon(center[0], center[1])
   )
-  const map = useMap()
-  const cornerIcon = createCornerIcon()
 
   useEffect(() => {
     onPolygonChange(corners.map(c => [c[0], c[1]]))
@@ -81,7 +77,7 @@ export function DraggableBuildingPolygonEditor({
         <Marker
           key={index}
           position={corner}
-          icon={cornerIcon}
+          icon={CORNER_ICON}
           draggable={true}
           eventHandlers={{
             dragend: (e) => {

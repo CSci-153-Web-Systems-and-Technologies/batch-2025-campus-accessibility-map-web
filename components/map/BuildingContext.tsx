@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react'
 import type { Building } from '@/types/map'
 
 interface BuildingContextType {
@@ -17,30 +17,30 @@ export function BuildingProvider({ children }: { children: ReactNode }) {
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null)
   const [isWindowOpen, setIsWindowOpen] = useState(false)
 
-  const selectBuilding = (building: Building | null) => {
+  const selectBuilding = useCallback((building: Building | null) => {
     setSelectedBuilding(building)
-  }
+  }, [])
 
-  const openWindow = (building: Building) => {
+  const openWindow = useCallback((building: Building) => {
     setSelectedBuilding(building)
     setIsWindowOpen(true)
-  }
+  }, [])
 
-  const closeWindow = () => {
+  const closeWindow = useCallback(() => {
     setIsWindowOpen(false)
     setSelectedBuilding(null)
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    selectedBuilding,
+    isWindowOpen,
+    selectBuilding,
+    openWindow,
+    closeWindow,
+  }), [selectedBuilding, isWindowOpen, selectBuilding, openWindow, closeWindow])
 
   return (
-    <BuildingContext.Provider
-      value={{
-        selectedBuilding,
-        isWindowOpen,
-        selectBuilding,
-        openWindow,
-        closeWindow,
-      }}
-    >
+    <BuildingContext.Provider value={contextValue}>
       {children}
     </BuildingContext.Provider>
   )

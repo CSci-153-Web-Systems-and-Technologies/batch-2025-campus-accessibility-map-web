@@ -1,17 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Polygon, Popup, useMap } from 'react-leaflet'
+import { Polygon, Popup } from 'react-leaflet'
 import type { Building } from '@/types/map'
 import { useBuilding } from './BuildingContext'
 import { useBuildingCreation } from './BuildingCreationContext'
 import { useMarkerCreation } from './MarkerCreationContext'
 import { DraggableBuildingPolygonEditor } from './DraggableBuildingPolygonEditor'
+import { safeFetch } from '@/lib/fetch-utils'
+import type { Building } from '@/types/database'
 
 interface BuildingsPolygonsProps {
   refreshTrigger?: number
   onBuildingClick?: (building: Building) => void
 }
+
+const DEFAULT_POLYGON_STYLE = {
+  fillColor: '#000000',
+  fillOpacity: 0.01,
+  color: '#000000',
+  weight: 0,
+  opacity: 0,
+} as const
+
+const SELECTED_POLYGON_STYLE = {
+  fillColor: '#f59e0b',
+  fillOpacity: 0.4,
+  color: '#92400e',
+  weight: 3,
+  opacity: 0.8,
+} as const
 
 function createBuildingPolygon(centerLat: number, centerLng: number, size: number = 0.0003): [number, number][] {
   const offset = size / 2
@@ -28,7 +46,6 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
   const [buildings, setBuildings] = useState<Building[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const map = useMap()
   const { selectedBuilding } = useBuilding()
   const { 
     clickedCoordinates: creatingCoordinates, 
@@ -43,33 +60,42 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
   } = useMarkerCreation()
 
   useEffect(() => {
+    const abortController = new AbortController()
+
     async function fetchBuildings() {
       setIsLoading(true)
       setError(null)
 
-      try {
-        const response = await fetch('/api/buildings?limit=100')
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch buildings')
-        }
+      const { data, error: fetchError } = await safeFetch<Building[]>(
+        '/api/buildings?limit=100',
+        abortController.signal
+      )
 
-        const result = await response.json()
-        const buildingsData = (result.data || []).map((building: any) => ({
+      if (fetchError) {
+        if (fetchError.name !== 'AbortError') {
+          console.error('Error fetching buildings:', fetchError)
+          setError(fetchError.message)
+        }
+        setIsLoading(false)
+        return
+      }
+
+      if (data) {
+        const buildingsData: Building[] = data.map((building) => ({
           ...building,
           coordinates: [building.latitude, building.longitude] as [number, number],
         }))
-
         setBuildings(buildingsData)
-      } catch (err) {
-        console.error('Error fetching buildings:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load buildings')
-      } finally {
-        setIsLoading(false)
       }
+
+      setIsLoading(false)
     }
 
     fetchBuildings()
+
+    return () => {
+      abortController.abort()
+    }
   }, [refreshTrigger])
 
   if (isLoading || error) {
@@ -94,17 +120,13 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
       ? (building.polygon_coordinates as [number, number][])
       : createBuildingPolygon(building.latitude, building.longitude)
 
+    const pathOptions = isSelected ? SELECTED_POLYGON_STYLE : DEFAULT_POLYGON_STYLE
+
     polygons.push(
       <Polygon
         key={building.id}
         positions={polygonCoords}
-        pathOptions={{
-          fillColor: isSelected ? '#f59e0b' : '#000000',
-          fillOpacity: isSelected ? 0.4 : 0.01,
-          color: isSelected ? '#92400e' : '#000000',
-          weight: isSelected ? 3 : 0,
-          opacity: isSelected ? 0.8 : 0,
-        }}
+        pathOptions={pathOptions}
         eventHandlers={{
           click: (e) => {
             e.originalEvent.stopPropagation()
