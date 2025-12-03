@@ -10,6 +10,7 @@ import { FeaturePhoto } from './FeaturePhoto'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
 import { formatFeatureType } from '@/lib/utils/feature-utils'
+import { useMapFilters } from './MapFiltersContext'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
@@ -39,6 +40,7 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { isFeatureTypeEnabled } = useMapFilters()
   const map = useMap()
 
   const iconCache = useMemo(() => {
@@ -109,9 +111,11 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
     return null
   }
 
+  const visibleFeatures = features.filter(feature => isFeatureTypeEnabled(feature.feature_type))
+
   return (
     <>
-      {features.map((feature) => (
+      {visibleFeatures.map((feature) => (
         <Marker
           key={feature.id}
           position={feature.coordinates}
