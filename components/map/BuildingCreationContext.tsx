@@ -3,28 +3,28 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 import type { LatLng } from '@/types/map'
 
-interface MarkerCreationContextType {
+interface BuildingCreationContextType {
   isCreating: boolean
   setCreating: (creating: boolean) => void
   clickedCoordinates: LatLng | null
   setClickedCoordinates: (coords: LatLng | null) => void
-  selectedBuildingId: string | null
-  setSelectedBuildingId: (buildingId: string | null) => void
+  polygonCoordinates: number[][] | null
+  setPolygonCoordinates: (coords: number[][] | null) => void
   openModal: () => void
   closeModal: () => void
   isModalOpen: boolean
-  refreshMarkers: () => void
-  markersRefreshTrigger: number
+  refreshBuildings: () => void
+  buildingsRefreshTrigger: number
 }
 
-const MarkerCreationContext = createContext<MarkerCreationContextType | undefined>(undefined)
+const BuildingCreationContext = createContext<BuildingCreationContextType | undefined>(undefined)
 
-export function MarkerCreationProvider({ children }: { children: ReactNode }) {
+export function BuildingCreationProvider({ children }: { children: ReactNode }) {
   const [isCreating, setIsCreating] = useState(false)
   const [clickedCoordinates, setClickedCoordinates] = useState<LatLng | null>(null)
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
+  const [polygonCoordinates, setPolygonCoordinates] = useState<number[][] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [markersRefreshTrigger, setMarkersRefreshTrigger] = useState(0)
+  const [buildingsRefreshTrigger, setBuildingsRefreshTrigger] = useState(0)
 
   const openModal = () => {
     setIsModalOpen(true)
@@ -34,39 +34,39 @@ export function MarkerCreationProvider({ children }: { children: ReactNode }) {
   const closeModal = () => {
     setIsModalOpen(false)
     setClickedCoordinates(null)
-    setSelectedBuildingId(null)
+    setPolygonCoordinates(null)
     setIsCreating(false)
   }
 
-  const refreshMarkers = () => {
-    setMarkersRefreshTrigger(prev => prev + 1)
+  const refreshBuildings = () => {
+    setBuildingsRefreshTrigger(prev => prev + 1)
   }
 
   return (
-    <MarkerCreationContext.Provider
+    <BuildingCreationContext.Provider
       value={{
         isCreating,
         setCreating: setIsCreating,
         clickedCoordinates,
         setClickedCoordinates,
-        selectedBuildingId,
-        setSelectedBuildingId,
+        polygonCoordinates,
+        setPolygonCoordinates,
         openModal,
         closeModal,
         isModalOpen,
-        refreshMarkers,
-        markersRefreshTrigger,
+        refreshBuildings,
+        buildingsRefreshTrigger,
       }}
     >
       {children}
-    </MarkerCreationContext.Provider>
+    </BuildingCreationContext.Provider>
   )
 }
 
-export function useMarkerCreation() {
-  const context = useContext(MarkerCreationContext)
+export function useBuildingCreation() {
+  const context = useContext(BuildingCreationContext)
   if (!context) {
-    throw new Error('useMarkerCreation must be used within MarkerCreationProvider')
+    throw new Error('useBuildingCreation must be used within BuildingCreationProvider')
   }
   return context
 }

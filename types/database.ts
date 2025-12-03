@@ -2,11 +2,9 @@ export enum FeatureType {
   RAMP = 'ramp',
   ELEVATOR = 'elevator',
   ACCESSIBLE_RESTROOM = 'accessible_restroom',
-  ACCESSIBLE_PARKING = 'accessible_parking',
-  TACTILE_PAVING = 'tactile_paving',
-  BRAILLE_SIGNAGE = 'braille_signage',
-  ACCESSIBLE_ENTRANCE = 'accessible_entrance',
-  ACCESSIBLE_PATHWAY = 'accessible_pathway',
+  PARKING = 'parking',
+  RESTROOM = 'restroom',
+  BENCH = 'bench',
 }
 
 export interface Building {
@@ -15,6 +13,7 @@ export interface Building {
   description: string | null
   latitude: number
   longitude: number
+  polygon_coordinates: number[][] | null
   created_by: string
   created_at: string
   updated_at: string
@@ -93,4 +92,5 @@ export type AccessibilityFeatureUpdate = DatabaseUpdate<AccessibilityFeature>
 export type FeaturePhotoUpdate = DatabaseUpdate<FeaturePhoto>
 export type FeatureCommentUpdate = DatabaseUpdate<FeatureComment>
 export type UserProfileUpdate = DatabaseUpdate<UserProfile>
+
 

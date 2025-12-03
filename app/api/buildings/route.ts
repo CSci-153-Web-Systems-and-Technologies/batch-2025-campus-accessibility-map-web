@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     if (!isAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden: Only admins can create buildings' },
+        { error: 'Forbidden' },
         { status: 403 }
       )
     }
@@ -69,20 +69,6 @@ export async function POST(request: Request) {
     if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
       return NextResponse.json(
         { error: 'Building name is required' },
-        { status: 400 }
-      )
-    }
-
-    if (typeof body.latitude !== 'number' || body.latitude < -90 || body.latitude > 90) {
-      return NextResponse.json(
-        { error: 'Valid latitude is required' },
-        { status: 400 }
-      )
-    }
-
-    if (typeof body.longitude !== 'number' || body.longitude < -180 || body.longitude > 180) {
-      return NextResponse.json(
-        { error: 'Valid longitude is required' },
         { status: 400 }
       )
     }
@@ -99,7 +85,9 @@ export async function POST(request: Request) {
       description: body.description?.trim() || null,
       latitude: body.latitude,
       longitude: body.longitude,
+      polygon_coordinates: body.polygon_coordinates || null,
       created_by: user.id,
+      deleted_at: null,
     }
 
     const { data, error } = await supabase
