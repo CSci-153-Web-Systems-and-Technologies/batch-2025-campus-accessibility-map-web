@@ -5,12 +5,18 @@ import { useEffect, useState } from 'react'
 import { VSU_CAMPUS_CONFIG } from '@/types/map'
 import { configureLeafletIcons } from '@/lib/leaflet/icon-config'
 import { MapClickHandler } from './MapClickHandler'
+import { BuildingCreationClickHandler } from './BuildingCreationClickHandler'
 import { useMarkerCreation } from './MarkerCreationContext'
+import { useBuildingCreation } from './BuildingCreationContext'
+import { useBuilding } from './BuildingContext'
 import { AccessibilityMarkers } from './AccessibilityMarkers'
+import { BuildingsPolygons } from './BuildingsPolygons'
 
 export default function CampusMap() {
   const [isMounted, setIsMounted] = useState(false)
   const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
+  const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingModal, buildingsRefreshTrigger } = useBuildingCreation()
+  const { openWindow } = useBuilding()
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -29,6 +35,16 @@ export default function CampusMap() {
     }
   }
 
+  const handleBuildingMapClick = (coordinates: [number, number]) => {
+    if (isCreatingBuilding) {
+      setBuildingCoordinates(coordinates)
+    }
+  }
+
+  const handleBuildingClick = (building: any) => {
+    openWindow(building)
+  }
+
   return (
     <MapContainer
       center={VSU_CAMPUS_CONFIG.center}
@@ -45,7 +61,9 @@ export default function CampusMap() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | VSU Campus Accessibility Map'
       />
       <MapClickHandler enabled={isCreating} onMapClick={handleMapClick} />
+      <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
       <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
+      <BuildingsPolygons refreshTrigger={buildingsRefreshTrigger} onBuildingClick={handleBuildingClick} />
     </MapContainer>
   )
 }

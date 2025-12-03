@@ -24,7 +24,7 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { refreshMarkers } = useMarkerCreation()
+  const { refreshMarkers, selectedBuildingId } = useMarkerCreation()
 
   if (!initialLat || !initialLng) {
     return (
@@ -72,7 +72,7 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
           description: description.trim() || null,
           latitude: initialLat,
           longitude: initialLng,
-          building_id: null,
+          building_id: selectedBuildingId || null,
         }),
       })
 
@@ -181,11 +181,9 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
     [FeatureType.RAMP]: 'Ramp',
     [FeatureType.ELEVATOR]: 'Elevator',
     [FeatureType.ACCESSIBLE_RESTROOM]: 'Accessible Restroom',
-    [FeatureType.ACCESSIBLE_PARKING]: 'Accessible Parking',
-    [FeatureType.TACTILE_PAVING]: 'Tactile Paving',
-    [FeatureType.BRAILLE_SIGNAGE]: 'Braille Signage',
-    [FeatureType.ACCESSIBLE_ENTRANCE]: 'Accessible Entrance',
-    [FeatureType.ACCESSIBLE_PATHWAY]: 'Accessible Pathway',
+    [FeatureType.PARKING]: 'Parking',
+    [FeatureType.RESTROOM]: 'Restroom',
+    [FeatureType.BENCH]: 'Bench',
   }
 
   return (
