@@ -1,4 +1,4 @@
-import { LoginForm } from "@/components/login-form";
+import { AuthForm } from "@/components/AuthForm";
 
 export default function Page() {
   return (
@@ -10,7 +10,7 @@ export default function Page() {
     >
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative z-10 w-full max-w-sm">
-        <LoginForm />
+        <AuthForm />
       </div>
       <div className="absolute bottom-4 right-4 z-10 text-xs text-white/60">
         <a 

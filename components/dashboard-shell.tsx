@@ -11,7 +11,6 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const isAuthRoute = pathname.startsWith("/login") || 
-                      pathname.startsWith("/sign-up") || 
                       pathname.startsWith("/forgot-password") || 
                       pathname.startsWith("/update-password") || 
                       pathname.startsWith("/confirm") || 
