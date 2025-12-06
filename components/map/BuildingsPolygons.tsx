@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Polygon, Popup } from 'react-leaflet'
+import { Polygon } from 'react-leaflet'
 import type { Building } from '@/types/map'
 import { useBuilding } from './BuildingContext'
 import { useBuildingCreation } from './BuildingCreationContext'
@@ -12,7 +12,7 @@ import type { Building } from '@/types/database'
 
 interface BuildingsPolygonsProps {
   refreshTrigger?: number
-  onBuildingClick?: (building: Building) => void
+  onBuildingClick?: (building: Building, event?: { latlng?: { lat: number, lng: number }, screenPoint?: { x: number, y: number } }) => void
 }
 
 const DEFAULT_POLYGON_STYLE = {
@@ -102,13 +102,13 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
     return null
   }
 
-  const handlePolygonClick = (building: Building, clickLat: number, clickLng: number) => {
+  const handlePolygonClick = (building: Building, clickLat: number, clickLng: number, screenPoint?: { x: number, y: number }) => {
     if (isCreatingMarker) {
       setSelectedBuildingId(building.id)
       setMarkerCoordinates([clickLat, clickLng])
       openMarkerModal()
     } else if (onBuildingClick) {
-      onBuildingClick(building)
+      onBuildingClick(building, { latlng: { lat: clickLat, lng: clickLng }, screenPoint })
     }
   }
 
@@ -131,31 +131,14 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
           click: (e) => {
             e.originalEvent.stopPropagation()
             const { lat, lng } = e.latlng
-            handlePolygonClick(building, lat, lng)
+            const containerPoint = (e.target as any)._map.containerPointToLayerPoint(e.latlng)
+            handlePolygonClick(building, lat, lng, { x: containerPoint.x, y: containerPoint.y })
           },
         }}
         interactive={true}
         bubblingMouseEvents={false}
         zIndexOffset={isCreatingMarker ? 1000 : 0}
       >
-        {isSelected && (
-          <Popup>
-            <div className="p-2 min-w-[200px]">
-              <h3 className="font-bold text-lg mb-1">{building.name}</h3>
-              {building.description && (
-                <p className="text-sm text-muted-foreground mb-2">{building.description}</p>
-              )}
-              {onBuildingClick && (
-                <button
-                  onClick={() => handlePolygonClick(building, building.latitude, building.longitude)}
-                  className="text-sm text-primary hover:underline mt-2"
-                >
-                  View Features
-                </button>
-              )}
-            </div>
-          </Popup>
-        )}
       </Polygon>
     )
   })

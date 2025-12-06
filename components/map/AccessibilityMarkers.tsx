@@ -5,12 +5,14 @@ import { Marker, useMap } from 'react-leaflet'
 import type { LeafletMouseEvent } from 'leaflet'
 import { HiLocationMarker } from 'react-icons/hi'
 import { createReactIconMarker } from '@/lib/leaflet/react-icon-marker'
-import type { AccessibilityFeature } from '@/types/map'
+import type { AccessibilityFeature, Building } from '@/types/map'
 import { FeatureType } from '@/types/database'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
+import type { Building as DBBuilding } from '@/types/database'
 import { useMapFilters } from './MapFiltersContext'
 import { useFeatureModal } from './FeatureModalContext'
+import { useBuilding } from './BuildingContext'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
@@ -38,10 +40,12 @@ function getMarkerIcon(featureType: FeatureType) {
 
 export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
+  const [buildings, setBuildings] = useState<Building[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { isFeatureTypeEnabled } = useMapFilters()
   const { openModal } = useFeatureModal()
+  const { selectedBuilding } = useBuilding()
   const map = useMap()
 
   const iconCache = useMemo(() => {
@@ -55,26 +59,30 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
   useEffect(() => {
     const abortController = new AbortController()
 
-    async function fetchFeatures() {
+    async function fetchData() {
       setIsLoading(true)
       setError(null)
 
-      const { data, error } = await safeFetch<ApiFeatureWithPhotos[]>(
-        '/api/features?limit=100',
-        abortController.signal
-      )
+      const [featuresResult, buildingsResult] = await Promise.all([
+        safeFetch<ApiFeatureWithPhotos[]>(
+          '/api/features?limit=100',
+          abortController.signal
+        ),
+        safeFetch<DBBuilding[]>(
+          '/api/buildings?limit=100',
+          abortController.signal
+        )
+      ])
 
-      if (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Error fetching features:', error)
-          setError(error.message)
-        }
+      if (featuresResult.error && featuresResult.error.name !== 'AbortError') {
+        console.error('Error fetching features:', featuresResult.error)
+        setError(featuresResult.error.message)
         setIsLoading(false)
         return
       }
 
-      if (data) {
-        const featuresData: AccessibilityFeature[] = data.map((feature) => ({
+      if (featuresResult.data) {
+        const featuresData: AccessibilityFeature[] = featuresResult.data.map((feature) => ({
           ...feature,
           feature_type: feature.feature_type as FeatureType,
           coordinates: [feature.latitude, feature.longitude] as [number, number],
@@ -93,15 +101,47 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
         setFeatures(featuresData)
       }
 
+      if (buildingsResult.data) {
+        const buildingsData: Building[] = buildingsResult.data.map((building) => ({
+          ...building,
+          coordinates: [building.latitude, building.longitude] as [number, number],
+        }))
+        setBuildings(buildingsData)
+      }
+
       setIsLoading(false)
     }
 
-    fetchFeatures()
+    fetchData()
 
     return () => {
       abortController.abort()
     }
   }, [refreshTrigger])
+
+  const visibleFeatures = useMemo(() => {
+    return features.filter(feature => isFeatureTypeEnabled(feature.feature_type))
+  }, [features, isFeatureTypeEnabled])
+  
+  const buildingMap = useMemo(() => {
+    const map = new Map<string, Building>()
+    buildings.forEach(building => {
+      map.set(building.id, building)
+    })
+    return map
+  }, [buildings])
+
+  const featuresByBuilding = useMemo(() => {
+    const map = new Map<string, AccessibilityFeature[]>()
+    visibleFeatures.forEach(feature => {
+      if (feature.building_id) {
+        const buildingFeatures = map.get(feature.building_id) || []
+        buildingFeatures.push(feature)
+        map.set(feature.building_id, buildingFeatures)
+      }
+    })
+    return map
+  }, [visibleFeatures])
 
   if (isLoading) {
     return null
@@ -112,11 +152,22 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
     return null
   }
 
-  const visibleFeatures = features.filter(feature => isFeatureTypeEnabled(feature.feature_type))
+  const standaloneFeatures = visibleFeatures.filter(feature => !feature.building_id)
+
+  const getStackedPosition = (buildingCenter: [number, number], index: number, total: number): [number, number] => {
+    const offsetDistance = 0.00002
+    const angle = (index / total) * 2 * Math.PI
+    const offsetLat = Math.cos(angle) * offsetDistance
+    const offsetLng = Math.sin(angle) * offsetDistance
+    return [
+      buildingCenter[0] + offsetLat,
+      buildingCenter[1] + offsetLng,
+    ]
+  }
 
   return (
     <>
-      {visibleFeatures.map((feature) => (
+      {standaloneFeatures.map((feature) => (
         <Marker
           key={feature.id}
           position={feature.coordinates}
@@ -135,6 +186,26 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
           }}
         />
       ))}
+      {Array.from(featuresByBuilding.entries()).map(([buildingId, buildingFeatures]) => {
+        const building = buildingMap.get(buildingId)
+        if (!building) return null
+
+        const featuresToShow = buildingFeatures.slice(0, 5)
+        const buildingCenter: [number, number] = building.coordinates
+
+        return featuresToShow.map((feature, index) => {
+          const stackedPosition = getStackedPosition(buildingCenter, index, featuresToShow.length)
+          return (
+            <Marker
+              key={feature.id}
+              position={stackedPosition}
+              icon={iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)!}
+              interactive={false}
+              zIndexOffset={selectedBuilding?.id === buildingId ? 500 : 0}
+            />
+          )
+        })
+      })}
     </>
   )
 }
