@@ -17,6 +17,8 @@ import { BuildingSearch } from './BuildingSearch'
 import { FiltersDrawer } from './FiltersDrawer'
 import { MapFiltersProvider } from './MapFiltersContext'
 import { MapControlProvider } from './MapControlContext'
+import { FeatureModalProvider } from './FeatureModalContext'
+import { FeatureModal } from './FeatureModal'
 
 function MapLayoutContent({
   children,
@@ -72,6 +74,7 @@ function MapLayoutContent({
               onClose={closeWindow}
             />
           )}
+          <FeatureModal />
         </div>
         {hasOverlay && (
           <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm overflow-y-auto">
@@ -99,11 +102,13 @@ export function MapLayout({
     <MarkerCreationProvider>
       <BuildingCreationProvider>
         <BuildingProvider>
-          <MapFiltersProvider>
-            <MapControlProvider>
-              <MapLayoutContent>{children}</MapLayoutContent>
-            </MapControlProvider>
-          </MapFiltersProvider>
+          <FeatureModalProvider>
+            <MapFiltersProvider>
+              <MapControlProvider>
+                <MapLayoutContent>{children}</MapLayoutContent>
+              </MapControlProvider>
+            </MapFiltersProvider>
+          </FeatureModalProvider>
         </BuildingProvider>
       </BuildingCreationProvider>
     </MarkerCreationProvider>

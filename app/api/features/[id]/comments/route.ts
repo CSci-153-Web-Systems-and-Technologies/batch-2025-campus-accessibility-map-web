@@ -24,7 +24,7 @@ export async function GET(
       )
     }
 
-    const { data, error } = await supabase
+    const { data: commentsData, error } = await supabase
       .from('feature_comments')
       .select('*')
       .eq('feature_id', featureId)
@@ -39,15 +39,39 @@ export async function GET(
       )
     }
 
-    const comments = data || []
-    const commentsMap = new Map()
-    const rootComments: (typeof comments[0] & { replies?: typeof comments })[] = []
+    const comments = commentsData || []
+    
+    const userIds = [...new Set(comments.map((c: any) => c.user_id))]
+    
+    const { data: profilesData } = await supabase
+      .from('user_profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', userIds)
 
-    comments.forEach((comment) => {
+    const profilesMap = new Map()
+    if (profilesData) {
+      profilesData.forEach((profile: any) => {
+        profilesMap.set(profile.id, profile)
+      })
+    }
+
+    const commentsWithProfiles = comments.map((comment: any) => {
+      const profile = profilesMap.get(comment.user_id)
+      return {
+        ...comment,
+        user_display_name: profile?.display_name || null,
+        user_avatar_url: profile?.avatar_url || null,
+      }
+    })
+
+    const commentsMap = new Map()
+    const rootComments: (typeof commentsWithProfiles[0] & { replies?: typeof commentsWithProfiles })[] = []
+
+    commentsWithProfiles.forEach((comment) => {
       commentsMap.set(comment.id, { ...comment, replies: [] })
     })
 
-    comments.forEach((comment) => {
+    commentsWithProfiles.forEach((comment) => {
       if (comment.parent_id) {
         const parent = commentsMap.get(comment.parent_id)
         if (parent) {
