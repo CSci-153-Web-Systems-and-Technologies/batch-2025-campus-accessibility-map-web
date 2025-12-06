@@ -76,7 +76,7 @@ export function AuthForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/confirm?next=/`,
+          emailRedirectTo: `${window.location.origin}/confirm`,
         },
       });
       if (error) throw error;

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ProfileSetupModal } from "@/components/ProfileSetupModal";
 import "./globals.css";
 import 'leaflet/dist/leaflet.css';
 
@@ -36,6 +38,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <DashboardShell>{children}</DashboardShell>
+          <Suspense fallback={null}>
+            <ProfileSetupModal />
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>
