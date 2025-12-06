@@ -13,6 +13,10 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Check if "Remember Me" is enabled (30 days expiration) or session-only
+  const rememberMe = request.cookies.get('remember_me')?.value === 'true';
+  const cookieMaxAge = rememberMe ? 60 * 60 * 24 * 30 : undefined; // 30 days or session
+
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
@@ -30,9 +34,24 @@ export async function updateSession(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
-          );
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Apply remember_me expiration to Supabase auth cookies
+            const isAuthCookie = name.includes('auth-token') || 
+                                 name.includes('access-token') || 
+                                 name.includes('refresh-token') ||
+                                 name.includes('supabase-auth');
+            
+            const cookieOptions = {
+              ...options,
+              // Set maxAge based on remember_me preference (only for auth cookies)
+              ...(isAuthCookie && cookieMaxAge !== undefined ? { maxAge: cookieMaxAge } : {}),
+              // Keep existing httpOnly and secure settings, or set defaults for auth cookies
+              httpOnly: isAuthCookie ? (options?.httpOnly ?? true) : (options?.httpOnly ?? false),
+              secure: options?.secure ?? (process.env.NODE_ENV === 'production'),
+              sameSite: (options?.sameSite as 'lax' | 'strict' | 'none') ?? 'lax',
+            };
+            supabaseResponse.cookies.set(name, value, cookieOptions);
+          });
         },
       },
     },
@@ -48,14 +67,18 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   if (
-    request.nextUrl.pathname !== "/" &&
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !request.nextUrl.pathname.startsWith("/sign-up") &&
+    !request.nextUrl.pathname.startsWith("/forgot-password") &&
+    !request.nextUrl.pathname.startsWith("/update-password") &&
+    !request.nextUrl.pathname.startsWith("/confirm") &&
+    !request.nextUrl.pathname.startsWith("/error") &&
+    !request.nextUrl.pathname.startsWith("/sign-up-success")
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 

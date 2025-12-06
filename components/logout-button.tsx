@@ -10,7 +10,9 @@ export function LogoutButton() {
   const logout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/auth/login");
+    // Clear remember_me cookie on logout
+    document.cookie = `remember_me=; path=/; max-age=0`;
+    router.push("/login");
   };
 
   return <Button onClick={logout}>Logout</Button>;

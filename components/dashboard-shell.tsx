@@ -10,7 +10,13 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthRoute = pathname.startsWith("/auth");
+  const isAuthRoute = pathname.startsWith("/login") || 
+                      pathname.startsWith("/sign-up") || 
+                      pathname.startsWith("/forgot-password") || 
+                      pathname.startsWith("/update-password") || 
+                      pathname.startsWith("/confirm") || 
+                      pathname.startsWith("/error") ||
+                      pathname.startsWith("/sign-up-success");
   const isMapRoute = pathname === "/" || pathname === "/profile" || pathname === "/settings";
 
   if (isAuthRoute) {
