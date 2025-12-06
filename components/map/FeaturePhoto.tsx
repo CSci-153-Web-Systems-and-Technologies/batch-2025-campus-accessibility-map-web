@@ -58,7 +58,7 @@ export function FeaturePhoto({
   return (
     <img
       {...imageProps}
-      loading="lazy"
+      loading="eager"
     />
   )
 }

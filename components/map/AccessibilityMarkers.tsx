@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Marker, Popup, useMap } from 'react-leaflet'
+import { Marker, useMap } from 'react-leaflet'
+import type { LeafletMouseEvent } from 'leaflet'
 import { HiLocationMarker } from 'react-icons/hi'
 import { createReactIconMarker } from '@/lib/leaflet/react-icon-marker'
 import type { AccessibilityFeature } from '@/types/map'
 import { FeatureType } from '@/types/database'
-import { FeaturePhoto } from './FeaturePhoto'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
-import { formatFeatureType } from '@/lib/utils/feature-utils'
 import { useMapFilters } from './MapFiltersContext'
+import { useFeatureModal } from './FeatureModalContext'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
@@ -41,6 +41,7 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { isFeatureTypeEnabled } = useMapFilters()
+  const { openModal } = useFeatureModal()
   const map = useMap()
 
   const iconCache = useMemo(() => {
@@ -120,30 +121,19 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
           key={feature.id}
           position={feature.coordinates}
           icon={iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)!}
-        >
-          <Popup>
-            <div className="p-2 min-w-[200px]">
-              <h3 className="font-bold text-lg mb-1">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {formatFeatureType(feature.feature_type)}
-              </p>
-              {feature.description && (
-                <p className="text-sm mb-2">{feature.description}</p>
-              )}
-              {feature.photos && feature.photos.length > 0 && (
-                <div className="mb-2">
-                  <FeaturePhoto
-                    photoUrl={feature.photos[0].full_url || feature.photos[0].photo_url}
-                    alt={feature.title}
-                    className="w-full rounded"
-                    height="128px"
-                    objectFit="cover"
-                  />
-                </div>
-              )}
-            </div>
-          </Popup>
-        </Marker>
+          eventHandlers={{
+            click: (e: LeafletMouseEvent) => {
+              const containerPoint = map.latLngToContainerPoint(e.latlng)
+              const mapContainer = map.getContainer()
+              const rect = mapContainer.getBoundingClientRect()
+              
+              openModal(feature, {
+                x: rect.left + containerPoint.x,
+                y: rect.top + containerPoint.y,
+              })
+            },
+          }}
+        />
       ))}
     </>
   )
