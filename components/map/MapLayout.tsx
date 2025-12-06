@@ -11,7 +11,6 @@ import { CreationModeOverlay } from './CreationModeOverlay'
 import { BuildingCreationOverlay } from './BuildingCreationOverlay'
 import { MarkerCreationModal } from './MarkerCreationModal'
 import { BuildingCreationModal } from './BuildingCreationModal'
-import { BuildingFeaturesWindow } from './BuildingFeaturesWindow'
 import { CampusMapWrapper } from './CampusMapWrapper'
 import { BuildingSearch } from './BuildingSearch'
 import { FiltersDrawer } from './FiltersDrawer'
@@ -19,6 +18,8 @@ import { MapFiltersProvider } from './MapFiltersContext'
 import { MapControlProvider } from './MapControlContext'
 import { FeatureModalProvider } from './FeatureModalContext'
 import { FeatureModal } from './FeatureModal'
+import { BuildingModalProvider } from './BuildingModalContext'
+import { BuildingModal } from './BuildingModal'
 
 function MapLayoutContent({
   children,
@@ -29,7 +30,6 @@ function MapLayoutContent({
   const hasOverlay = pathname === "/profile" || pathname === "/settings"
   const { isCreating, isModalOpen, clickedCoordinates, closeModal } = useMarkerCreation()
   const { isCreating: isCreatingBuilding, isModalOpen: isBuildingModalOpen, clickedCoordinates: buildingCoordinates, closeModal: closeBuildingModal, openModal: openBuildingModal } = useBuildingCreation()
-  const { isWindowOpen, selectedBuilding, closeWindow } = useBuilding()
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
@@ -68,13 +68,8 @@ function MapLayoutContent({
               initialLng={buildingCoordinates[1]}
             />
           )}
-          {isWindowOpen && selectedBuilding && (
-            <BuildingFeaturesWindow
-              building={selectedBuilding}
-              onClose={closeWindow}
-            />
-          )}
           <FeatureModal />
+          <BuildingModal />
         </div>
         {hasOverlay && (
           <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm overflow-y-auto">
@@ -103,11 +98,13 @@ export function MapLayout({
       <BuildingCreationProvider>
         <BuildingProvider>
           <FeatureModalProvider>
-            <MapFiltersProvider>
-              <MapControlProvider>
-                <MapLayoutContent>{children}</MapLayoutContent>
-              </MapControlProvider>
-            </MapFiltersProvider>
+            <BuildingModalProvider>
+              <MapFiltersProvider>
+                <MapControlProvider>
+                  <MapLayoutContent>{children}</MapLayoutContent>
+                </MapControlProvider>
+              </MapFiltersProvider>
+            </BuildingModalProvider>
           </FeatureModalProvider>
         </BuildingProvider>
       </BuildingCreationProvider>

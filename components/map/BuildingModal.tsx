@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import { FeaturePopupContent } from './FeaturePopupContent'
-import { useFeatureModal } from './FeatureModalContext'
+import { BuildingModalContent } from './BuildingModalContent'
+import { useBuildingModal } from './BuildingModalContext'
 
-export function FeatureModal() {
-  const { selectedFeature, isOpen, animationOrigin, closeModal } = useFeatureModal()
+export function BuildingModal() {
+  const { selectedBuilding, isOpen, animationOrigin, closeModal } = useBuildingModal()
 
   useEffect(() => {
     if (!isOpen) return
@@ -46,11 +46,11 @@ export function FeatureModal() {
     } as React.CSSProperties)
   }, [isOpen, animationOrigin])
 
-  if (!isOpen || !selectedFeature) return null
+  if (!isOpen || !selectedBuilding) return null
 
   return (
     <div 
-      className="fixed inset-0 z-[4000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 feature-modal-backdrop"
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 feature-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           closeModal()
@@ -69,9 +69,10 @@ export function FeatureModal() {
           <X className="w-4 h-4 md:w-5 md:h-5" />
         </button>
         <div className="w-full h-full">
-          <FeaturePopupContent feature={selectedFeature} />
+          <BuildingModalContent building={selectedBuilding} />
         </div>
       </div>
     </div>
   )
 }
+

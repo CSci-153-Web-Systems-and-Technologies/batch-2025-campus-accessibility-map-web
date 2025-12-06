@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { useBuildingModal } from './BuildingModalContext'
 import { useBuilding } from './BuildingContext'
 import { useMapControl } from './MapControlContext'
 import { safeFetch } from '@/lib/fetch-utils'
@@ -14,7 +15,7 @@ export function BuildingSearch() {
   const [searchResults, setSearchResults] = useState<Building[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const { openWindow } = useBuilding()
+  const { openModal } = useBuildingModal()
   const { mapInstance } = useMapControl()
 
   useEffect(() => {
@@ -57,13 +58,17 @@ export function BuildingSearch() {
   }, [searchQuery])
 
   const handleBuildingSelect = useCallback((building: Building) => {
-    openWindow(building)
+    const origin = mapInstance ? {
+      x: mapInstance.getContainer().getBoundingClientRect().left + mapInstance.getContainer().offsetWidth / 2,
+      y: mapInstance.getContainer().getBoundingClientRect().top + mapInstance.getContainer().offsetHeight / 2,
+    } : undefined
+    openModal(building, origin)
     setSearchQuery('')
     setShowResults(false)
     if (mapInstance) {
       mapInstance.setView(building.coordinates, 18, { animate: true })
     }
-  }, [openWindow, mapInstance])
+  }, [openModal, mapInstance])
 
   const clearSearch = useCallback(() => {
     setSearchQuery('')
