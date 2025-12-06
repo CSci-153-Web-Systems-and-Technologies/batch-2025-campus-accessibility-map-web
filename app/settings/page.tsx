@@ -27,7 +27,7 @@ export default function SettingsPage() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
 
       if (!currentUser) {
-        redirect('/auth/login')
+        redirect('/login')
         return
       }
 
@@ -152,7 +152,9 @@ export default function SettingsPage() {
 
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push('/auth/login')
+      // Clear remember_me cookie on logout
+      document.cookie = `remember_me=; path=/; max-age=0`
+      router.push('/login')
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to delete account')
       setIsDeleting(false)
@@ -279,7 +281,7 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium mb-2">
                 Password
               </label>
-              <Link href="/auth/update-password">
+              <Link href="/update-password">
                 <Button variant="outline" className="w-full md:w-auto">
                   Change Password
                 </Button>

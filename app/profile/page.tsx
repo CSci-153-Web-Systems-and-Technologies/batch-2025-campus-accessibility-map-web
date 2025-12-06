@@ -41,7 +41,7 @@ export default function ProfilePage() {
       const { data: { user: currentUser } } = await supabase.auth.getUser()
 
       if (!currentUser) {
-        redirect('/auth/login')
+        redirect('/login')
         return
       }
 

@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CookieConsentTooltip } from "@/components/CookieConsentModal";
 
 export function LoginForm({
   className,
@@ -26,6 +27,7 @@ export function LoginForm({
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -35,17 +37,27 @@ export function LoginForm({
     setError(null);
 
     try {
+      // Store remember_me preference in a cookie before login
+      // This cookie will be read by middleware to set appropriate expiration
+      if (rememberMe) {
+        document.cookie = `remember_me=true; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+      } else {
+        document.cookie = `remember_me=false; path=/; max-age=0; SameSite=Lax`;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
-          persistSession: rememberMe,
+          persistSession: true, // Always persist, but middleware controls expiration
         },
       });
       if (error) throw error;
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
+      // Clear remember_me cookie on error
+      document.cookie = `remember_me=; path=/; max-age=0`;
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +95,11 @@ export function LoginForm({
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div 
+                  className="relative flex items-center space-x-2"
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                >
                   <Checkbox
                     id="remember-me"
                     checked={rememberMe}
@@ -95,9 +111,12 @@ export function LoginForm({
                   >
                     Remember me
                   </Label>
+                  <CookieConsentTooltip
+                    isOpen={showTooltip}
+                  />
                 </div>
                 <Link
-                  href="/auth/forgot-password"
+                  href="/forgot-password"
                   className="text-sm underline-offset-4 hover:underline"
                 >
                   Forgot password?
@@ -110,7 +129,7 @@ export function LoginForm({
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
-                href="/auth/sign-up"
+                href="/sign-up"
                 className="underline underline-offset-4"
               >
                 Sign up
