@@ -9,7 +9,6 @@ import { FeatureType } from '@/types/database'
 import type { AccessibilityFeature } from '@/types/map'
 import { useFeatureModal } from '@/components/map/FeatureModalContext'
 import { useRouter } from 'next/navigation'
-import { Camera } from 'lucide-react'
 
 interface UserFeature {
   id: string
@@ -73,7 +72,7 @@ export default function ProfilePage() {
   }, [])
 
   const handleFeatureClick = async (featureId: string) => {
-    const { data, error } = await safeFetch<AccessibilityFeature>(
+    const { data, error } = await safeFetch<any>(
       `/api/features/${featureId}`
     )
 
@@ -82,7 +81,7 @@ export default function ProfilePage() {
         ...data,
         feature_type: data.feature_type as FeatureType,
         coordinates: [data.latitude, data.longitude] as [number, number],
-        photos: (data.photos || []).map(photo => ({
+        photos: (data.photos || []).map((photo: any) => ({
           id: photo.id,
           feature_id: data.id,
           photo_url: photo.photo_url,
@@ -101,43 +100,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleAvatarClick = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/jpeg,image/jpg,image/png,image/webp'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-
-      const formData = new FormData()
-      formData.append('file', file)
-
-      try {
-        const response = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const error = await response.json()
-          alert(error.error || 'Failed to upload avatar')
-          return
-        }
-
-        const result = await response.json()
-        if (result.data?.avatar_url) {
-          setProfile((prev: any) => ({
-            ...prev,
-            avatar_url: result.data.avatar_url,
-          }))
-        }
-      } catch (error) {
-        console.error('Error uploading avatar:', error)
-        alert('Failed to upload avatar')
-      }
-    }
-    input.click()
-  }
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User'
   const avatarUrl = profile?.avatar_url || null
@@ -155,11 +117,8 @@ export default function ProfilePage() {
   return (
     <div className="bg-card text-card-foreground p-6 rounded-lg shadow max-w-4xl mx-auto">
       <div className="flex items-center gap-6 mb-8 pb-6 border-b">
-        <div className="relative">
-          <div 
-            className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-border"
-            onClick={handleAvatarClick}
-          >
+        <div>
+          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
@@ -172,13 +131,6 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <button
-            onClick={handleAvatarClick}
-            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors border-2 border-background"
-            aria-label="Edit profile picture"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
         </div>
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-foreground mb-2">{displayName}</h1>
