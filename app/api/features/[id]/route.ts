@@ -12,7 +12,10 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('accessibility_features')
-      .select('*')
+      .select(`
+        *,
+        feature_photos!left(*)
+      `)
       .eq('id', id)
       .is('deleted_at', null)
       .single()
@@ -24,7 +27,31 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ data })
+    const STORAGE_BUCKET = 'feature-photos'
+    const photos = ((data as any).feature_photos || [])
+      .filter((photo: any) => !photo.deleted_at)
+      .map((photo: any) => {
+        const publicUrl = supabase.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(photo.photo_url)
+        return {
+          ...photo,
+          full_url: publicUrl.data.publicUrl,
+        }
+      })
+      .sort((a: any, b: any) => {
+        if (a.is_primary) return -1
+        if (b.is_primary) return 1
+        return 0
+      })
+
+    const featureWithPhotos = {
+      ...data,
+      photos,
+      feature_photos: undefined,
+    }
+
+    return NextResponse.json({ data: featureWithPhotos })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json(
