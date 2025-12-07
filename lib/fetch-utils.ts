@@ -1,12 +1,14 @@
 export async function safeFetch<T>(
   url: string,
-  signal?: AbortSignal
+  options?: RequestInit
 ): Promise<{ data: T; error: null } | { data: null; error: Error }> {
   try {
-    const response = await fetch(url, { signal })
+    const response = await fetch(url, options)
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      throw new Error(errorMessage)
     }
     
     const result = await response.json()

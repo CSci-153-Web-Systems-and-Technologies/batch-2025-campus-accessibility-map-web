@@ -32,7 +32,7 @@ export function BuildingSearchMapControl() {
         setIsSearching(true)
         const { data, error } = await safeFetch<DBBuilding[]>(
           `/api/buildings?search=${encodeURIComponent(searchQuery.trim())}&limit=10`,
-          abortController.signal
+          { signal: abortController.signal }
         )
 
         if (error && error.name !== 'AbortError') {

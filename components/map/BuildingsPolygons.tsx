@@ -70,7 +70,7 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
 
       const { data, error: fetchError } = await safeFetch<DBBuilding[]>(
         `/api/buildings?limit=${DEFAULT_FETCH_LIMIT}`,
-        abortController.signal
+        { signal: abortController.signal }
       )
 
       if (fetchError) {

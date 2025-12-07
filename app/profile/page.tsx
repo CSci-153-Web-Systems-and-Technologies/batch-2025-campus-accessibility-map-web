@@ -9,6 +9,7 @@ import { FeatureType } from '@/types/database'
 import type { AccessibilityFeature } from '@/types/map'
 import { useFeatureModal } from '@/components/map/FeatureModalContext'
 import { useRouter } from 'next/navigation'
+import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 
 interface UserFeature {
   id: string
@@ -32,6 +33,8 @@ export default function ProfilePage() {
   const [features, setFeatures] = useState<UserFeature[]>([])
   const [comments, setComments] = useState<UserComment[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [deletingFeatureId, setDeletingFeatureId] = useState<string | null>(null)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
   const { openModal } = useFeatureModal()
   const router = useRouter()
 
@@ -55,21 +58,24 @@ export default function ProfilePage() {
 
       setProfile(profileData)
 
-      const { data, error } = await safeFetch<{
-        features: UserFeature[]
-        comments: UserComment[]
-      }>('/api/profile/contributions')
-
-      if (!error && data) {
-        setFeatures(data.features)
-        setComments(data.comments || [])
-      }
-
+      await loadContributions()
       setIsLoading(false)
     }
 
     loadProfile()
   }, [])
+
+  const loadContributions = async () => {
+    const { data, error } = await safeFetch<{
+      features: UserFeature[]
+      comments: UserComment[]
+    }>('/api/profile/contributions')
+
+    if (!error && data) {
+      setFeatures(data.features)
+      setComments(data.comments || [])
+    }
+  }
 
   const handleFeatureClick = async (featureId: string) => {
     const { data, error } = await safeFetch<any>(
@@ -98,6 +104,42 @@ export default function ProfilePage() {
         openModal(feature)
       }, 100)
     }
+  }
+
+  const handleDeleteFeature = async (featureId: string) => {
+    setDeletingFeatureId(featureId)
+    
+    const { error } = await safeFetch(`/api/features/${featureId}`, {
+      method: 'DELETE',
+    })
+
+    setDeletingFeatureId(null)
+
+    if (error) {
+      alert('Failed to delete marker. Please try again.')
+      return
+    }
+
+    // Reload contributions
+    await loadContributions()
+  }
+
+  const handleDeleteComment = async (featureId: string, commentId: string) => {
+    setDeletingCommentId(commentId)
+    
+    const { error } = await safeFetch(`/api/features/${featureId}/comments/${commentId}`, {
+      method: 'DELETE',
+    })
+
+    setDeletingCommentId(null)
+
+    if (error) {
+      alert('Failed to delete comment. Please try again.')
+      return
+    }
+
+    // Reload contributions
+    await loadContributions()
   }
 
 
@@ -148,11 +190,13 @@ export default function ProfilePage() {
               {features.map((feature) => (
                 <div
                   key={feature.id}
-                  onClick={() => handleFeatureClick(feature.id)}
-                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => handleFeatureClick(feature.id)}
+                    >
                       <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
                       <div className="flex items-center gap-2">
                         <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
@@ -162,6 +206,16 @@ export default function ProfilePage() {
                           {new Date(feature.created_at).toLocaleDateString()}
                         </span>
                       </div>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <EditDeleteControls
+                        onEdit={() => {}}
+                        onDelete={() => handleDeleteFeature(feature.id)}
+                        isDeleting={deletingFeatureId === feature.id}
+                        showEdit={false}
+                        size="sm"
+                        deleteLabel="Delete marker"
+                      />
                     </div>
                   </div>
                 </div>
@@ -179,11 +233,13 @@ export default function ProfilePage() {
               {comments.map((comment) => (
                 <div
                   key={comment.id}
-                  onClick={() => handleFeatureClick(comment.feature_id)}
-                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0 overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div 
+                      className="flex-1 min-w-0 overflow-hidden cursor-pointer"
+                      onClick={() => handleFeatureClick(comment.feature_id)}
+                    >
                       <p className="text-sm text-foreground mb-2 line-clamp-2 break-words overflow-hidden">
                         {comment.content}
                       </p>
@@ -203,6 +259,16 @@ export default function ProfilePage() {
                           {new Date(comment.created_at).toLocaleDateString()}
                         </span>
                       </div>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <EditDeleteControls
+                        onEdit={() => {}}
+                        onDelete={() => handleDeleteComment(comment.feature_id, comment.id)}
+                        isDeleting={deletingCommentId === comment.id}
+                        showEdit={false}
+                        size="sm"
+                        deleteLabel="Delete comment"
+                      />
                     </div>
                   </div>
                 </div>

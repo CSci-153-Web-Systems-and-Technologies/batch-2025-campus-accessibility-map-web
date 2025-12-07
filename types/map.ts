@@ -49,12 +49,12 @@ export const VSU_CAMPUS_CONFIG: CampusMapConfig = {
   minZoom: 17,
   maxZoom: 18,
   bounds: [
-    [10.741, 124.791],  // West increased by additional 30% (0.0027)
-    [10.749, 124.794]   // East decreased by additional 30% (0.0027)
+    [10.741, 124.791],
+    [10.749, 124.794]
   ],
   maxBounds: [
-    [10.739, 124.790],  // West increased by additional 30% (0.0045)
-    [10.751, 124.796]   // East decreased by additional 30% (0.0045)
+    [10.739, 124.790],
+    [10.751, 124.796]
   ],
   maxBoundsViscosity: 1.0,
 }
