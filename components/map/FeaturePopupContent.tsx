@@ -17,6 +17,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useFeatureModal } from './FeatureModalContext'
 import { FeatureType } from '@/types/database'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
+import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
+import { getFeatureColor, hexToRgba } from '@/lib/utils/feature-colors'
 
 interface FeaturePopupContentProps {
   feature: AccessibilityFeature
@@ -450,7 +452,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     : null
 
   return (
-    <div className="w-full h-full flex flex-col bg-background rounded-lg border overflow-hidden relative">
+    <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
       {isFeatureOwner && !isEditingFeature && (
         <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50">
           <EditDeleteControls
@@ -463,9 +465,9 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           />
         </div>
       )}
-      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-gradient-to-br from-card to-muted/20 h-1/2 min-h-0">
+      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-1/2 min-h-0">
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-muted rounded-xl overflow-hidden border-2 border-border">
+          <div className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline">
             {firstPhoto ? (
               <FeaturePhoto
                 photoUrl={firstPhoto.full_url || firstPhoto.photo_url}
@@ -475,7 +477,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 objectFit="cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-base md:text-lg bg-muted/50">
+              <div className="w-full h-full flex items-center justify-center text-m3-on-surface-variant text-base md:text-lg bg-m3-surface-variant/50">
                 <span>No photo available</span>
               </div>
             )}
@@ -486,8 +488,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 likeData.user_liked
                   ? 'bg-red-500 text-white opacity-80 cursor-not-allowed'
                   : user
-                  ? 'bg-white/95 text-gray-700 hover:bg-white hover:scale-110 active:scale-95'
-                  : 'bg-white/90 text-gray-400 cursor-not-allowed'
+                  ? 'bg-m3-surface text-m3-on-surface hover:bg-m3-surface-bright hover:scale-110 active:scale-95'
+                  : 'bg-m3-surface-dim text-m3-on-surface-variant cursor-not-allowed'
               } ${isLiking ? 'opacity-50 cursor-wait' : ''}`}
               title={likeData.user_liked ? 'You already liked this' : 'Like this feature'}
             >
@@ -514,8 +516,16 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 />
                 <select
                   value={editFeatureData.feature_type}
-                  onChange={(e) => setEditFeatureData({ ...editFeatureData, feature_type: e.target.value as FeatureType })}
-                  className="px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs border border-primary/20"
+                  onChange={(e) => {
+                    const newType = e.target.value as FeatureType
+                    setEditFeatureData({ ...editFeatureData, feature_type: newType })
+                  }}
+                  className="px-3 py-1.5 rounded-md border font-semibold text-xs"
+                  style={{
+                    backgroundColor: hexToRgba(getFeatureColor(editFeatureData.feature_type), 0.1),
+                    borderColor: hexToRgba(getFeatureColor(editFeatureData.feature_type), 0.2),
+                    color: getFeatureColor(editFeatureData.feature_type)
+                  }}
                 >
                   {Object.values(FeatureType).map(type => (
                     <option key={type} value={type}>{formatFeatureType(type)}</option>
@@ -544,12 +554,12 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                             <img
                               src={photo.full_url || photo.photo_url}
                               alt="Feature photo"
-                              className="w-full h-24 object-cover rounded border"
+                              className="w-full h-24 object-cover rounded border-4 border-m3-outline"
                             />
                             <button
                               type="button"
                               onClick={() => handleDeletePhoto(photo.id)}
-                              className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center hover:bg-destructive/90 transition-colors opacity-0 group-hover:opacity-100"
+                              className="absolute top-1 right-1 bg-m3-error text-m3-on-error rounded-full w-6 h-6 flex items-center justify-center hover:bg-m3-error-hover transition-colors opacity-0 group-hover:opacity-100"
                               aria-label="Delete photo"
                             >
                               <X className="w-4 h-4" />
@@ -584,12 +594,12 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                           <img
                             src={preview}
                             alt={`New photo ${index + 1}`}
-                            className="w-full h-24 object-cover rounded border"
+                            className="w-full h-24 object-cover rounded border-4 border-m3-outline"
                           />
                           <button
                             type="button"
                             onClick={() => removeNewPhoto(index)}
-                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center hover:bg-destructive/90 transition-colors"
+                            className="absolute top-1 right-1 bg-m3-error text-m3-on-error rounded-full w-6 h-6 flex items-center justify-center hover:bg-m3-error-hover transition-colors"
                             aria-label={`Remove photo ${index + 1}`}
                           >
                             <X className="w-4 h-4" />
@@ -619,12 +629,13 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               </div>
             ) : (
               <div>
-                <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-foreground leading-tight">
+                <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-m3-primary leading-tight">
                   {feature.title}
                 </h1>
-                <div className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary font-semibold text-xs md:text-sm border border-primary/20">
-                  {formatFeatureType(feature.feature_type)}
-                </div>
+                <FeatureTypeBadge 
+                  featureType={feature.feature_type} 
+                  size="md"
+                />
               </div>
             )}
 
@@ -644,7 +655,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
             {feature.description && (
               <div className="pt-2 md:pt-3">
-                <div className="bg-card border rounded-xl p-4 md:p-5 shadow-sm">
+                <div className="bg-m3-tertiary-container border rounded-xl p-4 md:p-5 shadow-sm">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 md:mb-3">
                     Description
                   </h3>
@@ -658,14 +669,14 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         </div>
       </header>
 
-      <main className="h-1/2 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0">
+      <main className="h-1/2 flex flex-col min-h-0 overflow-hidden bg-m3-surface">
+        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0 bg-m3-surface">
           <h2 className="font-semibold text-sm md:text-base text-foreground">
             Comments <span className="text-muted-foreground font-normal">({comments.length})</span>
           </h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0 bg-m3-surface">
           {isLoadingComments ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm text-muted-foreground">Loading comments...</p>
@@ -684,86 +695,28 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 const previewText = isLongComment 
                   ? comment.content.substring(0, 100) + '...' 
                   : comment.content
-                
-                const isCommentOwner = user?.id && comment.user_id && comment.user_id === user.id
-                const isEditing = editingCommentId === comment.id
 
                 return (
                   <article
                     key={comment.id}
-                    className="p-4 md:p-5 border rounded-xl hover:bg-muted/50 transition-all bg-card shadow-sm hover:shadow-md flex flex-col min-h-[112px] md:min-h-[128px] relative"
+                    className="p-4 md:p-5 border rounded-xl hover:bg-m3-surface-variant/50 transition-all bg-m3-secondary-container shadow-sm hover:shadow-md flex flex-col min-h-[112px] md:min-h-[128px] relative"
                   >
-                    {isCommentOwner && (
-                      <div 
-                        className="absolute top-2 right-2 z-10"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <EditDeleteControls
-                          onEdit={() => handleEditComment(comment)}
-                          onDelete={() => handleDeleteComment(comment.id)}
-                          isEditing={isEditing}
-                          isDeleting={isDeletingComment}
-                          showEdit={!isEditing}
-                          size="sm"
-                          editLabel="Edit comment"
-                          deleteLabel="Delete comment"
-                          className="gap-1.5 md:gap-1"
-                        />
-                      </div>
-                    )}
                     <div 
                       className="flex-1 min-w-0 mb-4 cursor-pointer"
-                      onClick={() => !isEditing && setSelectedComment(comment)}
+                      onClick={() => setSelectedComment(comment)}
                     >
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={editCommentContent}
-                            onChange={(e) => setEditCommentContent(e.target.value)}
-                            placeholder="Edit comment"
-                            className="min-h-[80px] text-sm"
-                            maxLength={2000}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSaveComment(comment.id)
-                              }}
-                              disabled={isSavingComment || !editCommentContent.trim()}
-                            >
-                              {isSavingComment ? 'Saving...' : 'Save'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleCancelEditComment()
-                              }}
-                              disabled={isSavingComment}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-2 break-words">
-                            {previewText}
-                          </p>
-                          {isLongComment && (
-                            <p className="text-xs text-muted-foreground mt-2 italic">
-                              Click to read more...
-                            </p>
-                          )}
-                        </>
+                      <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-2 break-words">
+                        {previewText}
+                      </p>
+                      {isLongComment && (
+                        <p className="text-xs text-muted-foreground mt-2 italic">
+                          Click to read more...
+                        </p>
                       )}
                     </div>
                     
                     <div className="flex items-center gap-3 pt-3 flex-shrink-0">
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-background shadow-sm">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-m3-surface-variant flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-m3-outline shadow-sm">
                         {comment.user_avatar_url ? (
                           <img
                             src={comment.user_avatar_url}
@@ -780,11 +733,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-normal text-sm md:text-base text-foreground/80 mb-0.5">
+                        <h4 className="font-normal text-sm md:text-base text-m3-primary mb-0.5">
                           {comment.user_display_name || 'Anonymous User'}
                         </h4>
                         {comment.created_at && (
-                          <p className="text-xs md:text-sm text-muted-foreground">
+                          <p className="text-xs md:text-sm text-m3-tertiary">
                             {new Date(comment.created_at).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'short',
@@ -801,7 +754,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           )}
         </div>
 
-        <footer className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0">
+        <footer className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0 bg-m3-surface">
           {user ? (
             <div className="flex gap-2 md:gap-3 items-start">
               <div className="flex-1">
@@ -845,10 +798,10 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             }
           }}
         >
-          <div className="relative w-full max-w-2xl max-h-[80vh] bg-background rounded-lg border shadow-2xl overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-2xl max-h-[80vh] bg-m3-surface rounded-lg border shadow-2xl overflow-hidden flex flex-col">
             <button
               onClick={() => setSelectedComment(null)}
-              className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-10 h-10 md:w-9 md:h-9 rounded-full bg-background hover:bg-background/90 text-foreground flex items-center justify-center shadow-xl border transition-all hover:scale-110 touch-manipulation"
+              className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-10 h-10 md:w-9 md:h-9 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface flex items-center justify-center shadow-xl border transition-all hover:scale-110 touch-manipulation"
               aria-label="Close comment"
             >
               <X className="w-5 h-5 md:w-5 md:h-5" />
@@ -876,7 +829,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <article className="space-y-4">
                 <div className="flex items-start gap-3 md:gap-4">
-                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-background shadow-sm">
+                  <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-m3-surface-variant flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-m3-outline shadow-sm">
                     {selectedComment.user_avatar_url ? (
                       <img
                         src={selectedComment.user_avatar_url}
@@ -893,11 +846,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-base md:text-lg text-foreground mb-1">
+                    <h4 className="font-semibold text-base md:text-lg text-m3-primary mb-1">
                       {selectedComment.user_display_name || 'Anonymous User'}
                     </h4>
                     {selectedComment.created_at && (
-                      <p className="text-xs md:text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm text-m3-tertiary">
                         {new Date(selectedComment.created_at).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'long',

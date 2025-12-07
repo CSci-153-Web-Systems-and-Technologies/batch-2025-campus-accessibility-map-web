@@ -75,7 +75,7 @@ export function Modal({ isOpen, onClose, children, zIndex = 3000, animationOrigi
       >
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-9 h-9 md:w-10 md:h-10 rounded-full bg-background hover:bg-background/90 text-foreground flex items-center justify-center shadow-xl border transition-all hover:scale-110"
+          className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-9 h-9 md:w-10 md:h-10 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface flex items-center justify-center shadow-xl border border-m3-outline transition-all hover:scale-110"
           aria-label="Close modal"
         >
           <X className="w-4 h-4 md:w-5 md:h-5" />
