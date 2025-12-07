@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useMemo, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { FeatureType } from '@/types/database'
 
 interface MapFiltersContextType {
@@ -42,16 +42,14 @@ export function MapFiltersProvider({ children }: { children: ReactNode }) {
     setEnabledFeatureTypes(new Set())
   }
 
-  const contextValue = useMemo(() => ({
-    enabledFeatureTypes,
-    toggleFeatureType,
-    isFeatureTypeEnabled,
-    enableAllTypes,
-    disableAllTypes,
-  }), [enabledFeatureTypes])
-
   return (
-    <MapFiltersContext.Provider value={contextValue}>
+    <MapFiltersContext.Provider value={{
+      enabledFeatureTypes,
+      toggleFeatureType,
+      isFeatureTypeEnabled,
+      enableAllTypes,
+      disableAllTypes,
+    }}>
       {children}
     </MapFiltersContext.Provider>
   )

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react'
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import type { AccessibilityFeature } from '@/types/map'
 
 interface AnimationOrigin {
@@ -37,19 +37,14 @@ export function FeatureModalProvider({ children }: { children: ReactNode }) {
     }, 300)
   }, [])
 
-  const value = useMemo(
-    () => ({
+  return (
+    <FeatureModalContext.Provider value={{
       selectedFeature,
       isOpen,
       animationOrigin,
       openModal,
       closeModal,
-    }),
-    [selectedFeature, isOpen, animationOrigin, openModal, closeModal]
-  )
-
-  return (
-    <FeatureModalContext.Provider value={value}>
+    }}>
       {children}
     </FeatureModalContext.Provider>
   )

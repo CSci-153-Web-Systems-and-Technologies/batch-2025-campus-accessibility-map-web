@@ -109,16 +109,6 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
         />
       </div>
 
-      <div>
-        <Label>Location</Label>
-        <div className="mt-1 px-3 py-2 border border-input bg-muted rounded-md text-sm text-muted-foreground">
-          {initialLat.toFixed(6)}, {initialLng.toFixed(6)}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Location is set from where you clicked on the map
-        </p>
-      </div>
-
       <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel

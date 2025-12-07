@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react'
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import type { Building } from '@/types/map'
 
 interface AnimationOrigin {
@@ -37,19 +37,14 @@ export function BuildingModalProvider({ children }: { children: ReactNode }) {
     }, 300)
   }, [])
 
-  const value = useMemo(
-    () => ({
+  return (
+    <BuildingModalContext.Provider value={{
       selectedBuilding,
       isOpen,
       animationOrigin,
       openModal,
       closeModal,
-    }),
-    [selectedBuilding, isOpen, animationOrigin, openModal, closeModal]
-  )
-
-  return (
-    <BuildingModalContext.Provider value={value}>
+    }}>
       {children}
     </BuildingModalContext.Provider>
   )
@@ -62,4 +57,5 @@ export function useBuildingModal() {
   }
   return context
 }
+
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import type { LatLng } from '@/types/map'
 
 interface MarkerCreationContextType {
@@ -42,31 +42,20 @@ export function MarkerCreationProvider({ children }: { children: ReactNode }) {
     setMarkersRefreshTrigger(prev => prev + 1)
   }, [])
 
-  const contextValue = useMemo(() => ({
-    isCreating,
-    setCreating: setIsCreating,
-    clickedCoordinates,
-    setClickedCoordinates,
-    selectedBuildingId,
-    setSelectedBuildingId,
-    openModal,
-    closeModal,
-    isModalOpen,
-    refreshMarkers,
-    markersRefreshTrigger,
-  }), [
-    isCreating,
-    clickedCoordinates,
-    selectedBuildingId,
-    isModalOpen,
-    markersRefreshTrigger,
-    openModal,
-    closeModal,
-    refreshMarkers,
-  ])
-
   return (
-    <MarkerCreationContext.Provider value={contextValue}>
+    <MarkerCreationContext.Provider value={{
+      isCreating,
+      setCreating: setIsCreating,
+      clickedCoordinates,
+      setClickedCoordinates,
+      selectedBuildingId,
+      setSelectedBuildingId,
+      openModal,
+      closeModal,
+      isModalOpen,
+      refreshMarkers,
+      markersRefreshTrigger,
+    }}>
       {children}
     </MarkerCreationContext.Provider>
   )
