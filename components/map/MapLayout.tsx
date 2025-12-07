@@ -29,7 +29,7 @@ function MapLayoutContent({
   const { isCreating: isCreatingBuilding, isModalOpen: isBuildingModalOpen, clickedCoordinates: buildingCoordinates, closeModal: closeBuildingModal, openModal: openBuildingModal } = useBuildingCreation()
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-m3-surface">
       <Sidebar />
       <main className="flex-1 relative">
         <div className="absolute inset-0 z-0">
@@ -68,7 +68,7 @@ function MapLayoutContent({
           <BuildingModal />
         </div>
         {hasOverlay && (
-          <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm overflow-y-auto">
+          <div className="absolute inset-0 z-10 bg-m3-surface/95 backdrop-blur-sm overflow-y-auto">
             <div className="min-h-full p-6">
               {children}
             </div>
@@ -92,13 +92,13 @@ export function MapLayout({
   return (
     <MarkerCreationProvider>
       <BuildingCreationProvider>
-        <FeatureModalProvider>
-          <BuildingModalProvider>
-            <MapFiltersProvider>
-              <MapLayoutContent>{children}</MapLayoutContent>
-            </MapFiltersProvider>
-          </BuildingModalProvider>
-        </FeatureModalProvider>
+          <FeatureModalProvider>
+            <BuildingModalProvider>
+              <MapFiltersProvider>
+                  <MapLayoutContent>{children}</MapLayoutContent>
+              </MapFiltersProvider>
+            </BuildingModalProvider>
+          </FeatureModalProvider>
       </BuildingCreationProvider>
     </MarkerCreationProvider>
   )

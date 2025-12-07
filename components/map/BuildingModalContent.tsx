@@ -15,6 +15,7 @@ import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 
 interface BuildingModalContentProps {
   building: Building
@@ -150,7 +151,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
   }, [building.id, isDeleting, closeModal])
 
   return (
-    <div className="w-full h-full flex flex-col bg-background rounded-lg border overflow-hidden relative">
+    <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
       {isAdmin && (
         <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50">
           <EditDeleteControls
@@ -167,9 +168,9 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
           />
         </div>
       )}
-      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-gradient-to-br from-card to-muted/20 h-1/2 min-h-0">
+      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-1/2 min-h-0">
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-muted rounded-xl overflow-hidden border-2 border-border">
+          <div className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline">
             {buildingPhoto ? (
               <FeaturePhoto
                 photoUrl={buildingPhoto.full_url || buildingPhoto.photo_url}
@@ -179,7 +180,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
                 objectFit="cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-base md:text-lg bg-muted/50">
+              <div className="w-full h-full flex items-center justify-center text-m3-on-surface-variant text-base md:text-lg bg-m3-surface-variant/50">
                 <span>No photo available</span>
               </div>
             )}
@@ -219,14 +220,14 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
             ) : (
               <>
                 <div>
-                  <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-foreground leading-tight">
+                  <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-m3-primary leading-tight">
                     {building.name}
                   </h1>
                 </div>
 
                 {building.description && (
                   <div className="pt-2 md:pt-3">
-                    <div className="bg-card border rounded-xl p-4 md:p-5 shadow-sm">
+                    <div className="bg-m3-tertiary-container border rounded-xl p-4 md:p-5 shadow-sm">
                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 md:mb-3">
                         Description
                       </h3>
@@ -242,14 +243,14 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         </div>
       </header>
 
-      <main className="h-1/2 flex flex-col min-h-0 overflow-hidden">
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0">
+      <main className="h-1/2 flex flex-col min-h-0 overflow-hidden bg-m3-surface">
+        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0 bg-m3-surface">
           <h2 className="font-semibold text-sm md:text-base text-foreground">
             Accessibility Features <span className="text-muted-foreground font-normal">({features.length})</span>
           </h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0">
+        <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0 bg-m3-surface">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm text-muted-foreground">Loading features...</p>
@@ -272,14 +273,17 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
                 <article
                   key={feature.id}
                   onClick={() => handleFeatureClick(feature)}
-                  className="p-4 md:p-5 border rounded-xl hover:bg-muted/50 transition-all bg-card shadow-sm hover:shadow-md cursor-pointer flex flex-col min-h-[112px] md:min-h-[128px]"
+                  className="p-4 md:p-5 border rounded-xl hover:bg-m3-surface-variant/50 transition-all bg-m3-secondary-container shadow-sm hover:shadow-md cursor-pointer flex flex-col min-h-[112px] md:min-h-[128px]"
                 >
                   <div className="flex-1 min-w-0 mb-3">
                     <h3 className="font-semibold text-base md:text-lg text-foreground mb-1.5 leading-tight">
                       {feature.title}
                     </h3>
-                    <div className="inline-flex items-center px-2 py-1 rounded-full bg-primary/10 text-primary font-medium text-xs border border-primary/20 mb-2">
-                      {formatFeatureType(feature.feature_type)}
+                    <div className="mb-2">
+                      <FeatureTypeBadge 
+                        featureType={feature.feature_type} 
+                        size="sm"
+                      />
                     </div>
                     {feature.description && (
                       <p className="text-xs md:text-sm text-muted-foreground leading-relaxed line-clamp-2 break-words mt-2">
@@ -293,7 +297,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
                       <FeaturePhoto
                         photoUrl={feature.photos[0].full_url || feature.photos[0].photo_url}
                         alt={feature.title}
-                        className="w-full rounded-lg"
+                        className="w-full rounded-lg border-4 border-m3-outline"
                         height="120px"
                         objectFit="cover"
                       />

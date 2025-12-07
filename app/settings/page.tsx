@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Camera, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { ThemeSelector } from '@/components/theme-selector'
 
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
@@ -167,26 +168,26 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-card text-card-foreground p-6 rounded-lg shadow">
+      <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading settings...</p>
+          <p className="text-m3-on-surface-variant">Loading settings...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-card text-card-foreground p-6 rounded-lg shadow max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-primary mb-8">Settings</h1>
+    <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-m3-primary mb-8">Settings</h1>
 
       <div className="space-y-8">
         <div>
-          <h2 className="text-xl font-semibold mb-4">Profile Settings</h2>
+          <h2 className="text-xl font-semibold mb-4 text-m3-primary">Profile Settings</h2>
           <div className="space-y-6">
             <div className="flex items-center gap-6">
               <div className="relative">
                 <div 
-                  className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-border"
+                  className="w-20 h-20 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-m3-outline"
                   onClick={handleAvatarClick}
                 >
                   {avatarUrl ? (
@@ -196,28 +197,28 @@ export default function SettingsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-2xl font-bold text-foreground">
+                    <span className="text-2xl font-bold text-m3-on-surface">
                       {displayName.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <button
                   onClick={handleAvatarClick}
-                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors border-2 border-background"
+                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-m3-primary text-m3-on-primary flex items-center justify-center shadow-lg hover:bg-m3-primary-hover transition-colors border-2 border-m3-surface"
                   aria-label="Edit profile picture"
                 >
                   <Camera className="w-3.5 h-3.5" />
                 </button>
               </div>
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-1">Profile Picture</p>
-                <p className="text-xs text-muted-foreground">Click to upload or change</p>
+                <p className="text-sm text-m3-on-surface-variant mb-1">Profile Picture</p>
+                <p className="text-xs text-m3-on-surface-variant">Click to upload or change</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+                <label htmlFor="firstName" className="block text-sm font-medium mb-2 text-m3-on-surface">
                   First Name
                 </label>
                 <Input
@@ -228,7 +229,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+                <label htmlFor="lastName" className="block text-sm font-medium mb-2 text-m3-on-surface">
                   Last Name
                 </label>
                 <Input
@@ -241,10 +242,10 @@ export default function SettingsPage() {
             </div>
 
             {saveMessage && (
-              <div className={`p-3 rounded-lg text-sm ${
+              <div className={`p-3 rounded-lg text-sm border ${
                 saveMessage.type === 'success' 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-m3-primary-container text-m3-on-primary-container border-m3-primary' 
+                  : 'bg-m3-error-container text-m3-on-error-container border-m3-error'
               }`}>
                 {saveMessage.text}
               </div>
@@ -260,25 +261,16 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="border-t pt-8">
-          <h2 className="text-xl font-semibold mb-4">Account Settings</h2>
+        <div className="border-t border-m3-outline pt-8">
+          <h2 className="text-xl font-semibold mb-4 text-m3-primary">Theme Settings</h2>
+          <ThemeSelector />
+        </div>
+
+        <div className="border-t border-m3-outline pt-8">
+          <h2 className="text-xl font-semibold mb-4 text-m3-primary">Account Settings</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Email
-              </label>
-              <Input
-                value={user?.email || ''}
-                disabled
-                className="bg-muted cursor-not-allowed"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed here
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 text-m3-on-surface">
                 Password
               </label>
               <Link href="/update-password">
@@ -288,19 +280,19 @@ export default function SettingsPage() {
               </Link>
             </div>
 
-            <div className="border-t pt-4 mt-6">
-              <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="border-t border-m3-outline pt-4 mt-6">
+              <div className="flex items-start gap-3 p-4 bg-m3-error-container border border-m3-error rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-m3-error flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-red-900 dark:text-red-100 mb-1">
+                  <h3 className="font-semibold text-m3-on-error-container mb-1">
                     Delete Account
                   </h3>
-                  <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                  <p className="text-sm text-m3-on-error-container mb-4">
                     This action cannot be undone. This will permanently delete your account and all associated data.
                   </p>
                   {showDeleteConfirm && (
-                    <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/40 rounded border border-red-300 dark:border-red-800">
-                      <p className="text-sm font-medium text-red-900 dark:text-red-100 mb-3">
+                    <div className="mb-4 p-3 bg-m3-error-container border border-m3-error rounded">
+                      <p className="text-sm font-medium text-m3-on-error-container mb-3">
                         Are you sure you want to delete your account? This action is permanent.
                       </p>
                       <div className="flex gap-2">

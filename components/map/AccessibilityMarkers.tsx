@@ -16,22 +16,14 @@ import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 import { useMapFilters } from './MapFiltersContext'
 import { useFeatureModal } from './FeatureModalContext'
 import { useBuildingModal } from './BuildingModalContext'
+import { getFeatureColor } from '@/lib/utils/feature-colors'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
 }
 
 function getMarkerIcon(featureType: FeatureType) {
-  const colorMap: Record<FeatureType, string> = {
-    [FeatureType.RAMP]: '#ef4444',
-    [FeatureType.ELEVATOR]: '#3b82f6',
-    [FeatureType.ACCESSIBLE_RESTROOM]: '#10b981',
-    [FeatureType.PARKING]: '#f97316',
-    [FeatureType.RESTROOM]: '#8b5cf6',
-    [FeatureType.BENCH]: '#eab308',
-  }
-
-  const color = colorMap[featureType] || '#ef4444'
+  const color = getFeatureColor(featureType)
 
   return createReactIconMarker(HiLocationMarker, {
     size: 20,

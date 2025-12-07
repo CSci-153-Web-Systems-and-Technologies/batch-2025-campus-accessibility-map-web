@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { ProfileSetupModal } from "@/components/ProfileSetupModal";
@@ -31,17 +30,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <DashboardShell>{children}</DashboardShell>
-          <Suspense fallback={null}>
-            <ProfileSetupModal />
-          </Suspense>
-        </ThemeProvider>
+        <DashboardShell>{children}</DashboardShell>
+        <Suspense fallback={null}>
+          <ProfileSetupModal />
+        </Suspense>
       </body>
     </html>
   );

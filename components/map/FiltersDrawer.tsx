@@ -7,15 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useMapFilters } from './MapFiltersContext'
 import { FeatureType } from '@/types/database'
 import { formatFeatureType } from '@/lib/utils/feature-utils'
-
-const FEATURE_TYPE_COLORS: Record<FeatureType, string> = {
-  [FeatureType.RAMP]: '#ef4444',
-  [FeatureType.ELEVATOR]: '#3b82f6',
-  [FeatureType.ACCESSIBLE_RESTROOM]: '#10b981',
-  [FeatureType.PARKING]: '#f97316',
-  [FeatureType.RESTROOM]: '#8b5cf6',
-  [FeatureType.BENCH]: '#eab308',
-}
+import { getFeatureColor } from '@/lib/utils/feature-colors'
 
 export function FiltersDrawer() {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -26,16 +18,16 @@ export function FiltersDrawer() {
 
   return (
     <div className="absolute top-4 right-4 z-[1000]">
-      <div className="bg-background border rounded-lg shadow-lg">
+      <div className="bg-m3-secondary-container border border-m3-outline rounded-lg shadow-lg">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-2 flex items-center justify-between gap-2 hover:bg-muted transition-colors"
+          className="w-full px-4 py-2 flex items-center justify-between gap-2 hover:bg-m3-secondary-hover/20 text-m3-on-secondary-container transition-colors"
         >
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4" />
             <span className="font-medium">Filters</span>
             {enabledFeatureTypes.size < Object.values(FeatureType).length && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-m3-on-secondary-container/70">
                 ({enabledFeatureTypes.size}/{Object.values(FeatureType).length})
               </span>
             )}
@@ -48,7 +40,7 @@ export function FiltersDrawer() {
         </button>
 
         {isExpanded && (
-          <div className="border-t p-4 space-y-3 min-w-[280px]">
+          <div className="border-t border-m3-outline p-4 space-y-3 min-w-[280px] bg-m3-secondary-container">
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -77,17 +69,17 @@ export function FiltersDrawer() {
                 return (
                   <label
                     key={type}
-                    className="flex items-center gap-3 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-md hover:bg-m3-secondary-hover/20 cursor-pointer transition-colors text-m3-on-secondary-container"
                   >
                     <Checkbox
                       checked={enabled}
                       onCheckedChange={() => toggleFeatureType(type)}
                     />
                     <div
-                      className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"
-                      style={{ backgroundColor: FEATURE_TYPE_COLORS[type] }}
+                      className="w-5 h-5 rounded-full border-2 border-m3-outline flex-shrink-0"
+                      style={{ backgroundColor: getFeatureColor(type) }}
                     />
-                    <span className="text-sm flex-1">{formatFeatureType(type)}</span>
+                    <span className="text-sm flex-1 text-m3-on-secondary-container">{formatFeatureType(type)}</span>
                   </label>
                 )
               })}

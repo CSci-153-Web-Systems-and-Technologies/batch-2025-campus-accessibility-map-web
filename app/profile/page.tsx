@@ -10,6 +10,7 @@ import type { AccessibilityFeature } from '@/types/map'
 import { useFeatureModal } from '@/components/map/FeatureModalContext'
 import { useRouter } from 'next/navigation'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
+import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 
 interface UserFeature {
   id: string
@@ -148,19 +149,19 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="bg-card text-card-foreground p-6 rounded-lg shadow">
+      <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading profile...</p>
+          <p className="text-m3-on-surface-variant">Loading profile...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-card text-card-foreground p-6 rounded-lg shadow max-w-4xl mx-auto">
-      <div className="flex items-center gap-6 mb-8 pb-6 border-b">
+    <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow max-w-4xl mx-auto">
+      <div className="flex items-center gap-6 mb-8 pb-6 border-b border-m3-outline">
         <div>
-          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-border">
+          <div className="w-24 h-24 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden border-2 border-m3-outline">
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
@@ -168,41 +169,42 @@ export default function ProfilePage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-3xl font-bold text-foreground">
+              <span className="text-3xl font-bold text-m3-on-surface">
                 {displayName.charAt(0).toUpperCase()}
               </span>
             )}
           </div>
         </div>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{displayName}</h1>
-          <p className="text-muted-foreground">{user?.email}</p>
+          <h1 className="text-3xl font-bold text-m3-primary mb-2">{displayName}</h1>
+          <p className="text-m3-on-surface-variant">{user?.email}</p>
         </div>
       </div>
 
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold mb-4">Your Markers</h2>
+          <h2 className="text-xl font-semibold mb-4 text-m3-primary">Your Markers</h2>
           {features.length === 0 ? (
-            <p className="text-muted-foreground">You haven't created any markers yet.</p>
+            <p className="text-m3-on-surface-variant">You haven't created any markers yet.</p>
           ) : (
             <div className="space-y-3">
               {features.map((feature) => (
                 <div
                   key={feature.id}
-                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="p-4 border border-m3-outline rounded-lg hover:bg-m3-surface-variant/50 transition-colors bg-m3-secondary-container"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div 
                       className="flex-1 cursor-pointer"
                       onClick={() => handleFeatureClick(feature.id)}
                     >
-                      <h3 className="font-semibold text-lg mb-1">{feature.title}</h3>
+                      <h3 className="font-semibold text-lg mb-1 text-m3-on-secondary-container">{feature.title}</h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                          {formatFeatureType(feature.feature_type)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
+                        <FeatureTypeBadge 
+                          featureType={feature.feature_type as FeatureType} 
+                          size="sm"
+                        />
+                        <span className="text-xs text-m3-tertiary">
                           {new Date(feature.created_at).toLocaleDateString()}
                         </span>
                       </div>
@@ -225,37 +227,39 @@ export default function ProfilePage() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">Your Comments</h2>
+          <h2 className="text-xl font-semibold mb-4 text-m3-primary">Your Comments</h2>
           {comments.length === 0 ? (
-            <p className="text-muted-foreground">You haven't made any comments yet.</p>
+            <p className="text-m3-on-surface-variant">You haven't made any comments yet.</p>
           ) : (
             <div className="space-y-3">
               {comments.map((comment) => (
                 <div
                   key={comment.id}
-                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="p-4 border border-m3-outline rounded-lg hover:bg-m3-surface-variant/50 transition-colors bg-m3-secondary-container"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div 
                       className="flex-1 min-w-0 overflow-hidden cursor-pointer"
                       onClick={() => handleFeatureClick(comment.feature_id)}
                     >
-                      <p className="text-sm text-foreground mb-2 line-clamp-2 break-words overflow-hidden">
+                      <p className="text-sm text-m3-on-secondary-container mb-2 line-clamp-2 break-words overflow-hidden">
                         {comment.content}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">
+                        <span className="text-xs font-semibold text-m3-on-surface-variant flex-shrink-0">
                           on
                         </span>
-                        <span className="text-xs font-semibold text-foreground truncate max-w-[200px] min-w-0">
+                        <span className="text-xs font-semibold text-m3-primary truncate max-w-[200px] min-w-0">
                           {comment.feature_title}
                         </span>
                         {comment.feature_type && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary flex-shrink-0">
-                            {formatFeatureType(comment.feature_type)}
-                          </span>
+                          <FeatureTypeBadge 
+                            featureType={comment.feature_type as FeatureType} 
+                            size="sm"
+                            className="flex-shrink-0"
+                          />
                         )}
-                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                        <span className="text-xs text-m3-tertiary flex-shrink-0">
                           {new Date(comment.created_at).toLocaleDateString()}
                         </span>
                       </div>

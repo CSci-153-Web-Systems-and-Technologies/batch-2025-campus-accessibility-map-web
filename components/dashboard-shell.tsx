@@ -3,12 +3,14 @@
 import { usePathname } from "next/navigation";
 import { MapLayout } from "@/components/map/MapLayout";
 import { Sidebar } from "@/components/sidebar";
+import { useTheme } from "@/lib/hooks/use-theme";
 
 export function DashboardShell({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useTheme();
   const pathname = usePathname();
   const isAuthRoute = pathname.startsWith("/login") || 
                       pathname.startsWith("/forgot-password") || 
@@ -27,7 +29,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-m3-surface">
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-6">
         {children}

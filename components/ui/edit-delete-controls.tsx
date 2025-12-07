@@ -86,7 +86,7 @@ export function EditDeleteControls({
           variant="ghost"
           onClick={onSave}
           disabled={isSaving}
-          className={`${sizes.button} rounded-full bg-background hover:bg-background/90 text-primary shadow-xl border transition-all hover:scale-110 touch-manipulation`}
+          className={`${sizes.button} rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-primary shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={saveLabel}
         >
           {isSaving ? <Loader2 className={`${sizes.icon} animate-spin`} /> : <Check className={sizes.icon} />}
@@ -96,7 +96,7 @@ export function EditDeleteControls({
           variant="ghost"
           onClick={handleCancel}
           disabled={isSaving}
-          className={`${sizes.button} rounded-full bg-background hover:bg-background/90 text-foreground shadow-xl border transition-all hover:scale-110 touch-manipulation`}
+          className={`${sizes.button} rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={cancelLabel}
         >
           <X className={sizes.icon} />
@@ -113,7 +113,7 @@ export function EditDeleteControls({
           variant="ghost"
           onClick={onEdit}
           disabled={isDeleting}
-          className={`${sizes.button} rounded-full bg-background hover:bg-background/90 text-foreground shadow-xl border transition-all hover:scale-110 touch-manipulation`}
+          className={`${sizes.button} rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-on-secondary-container shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={editLabel}
         >
           <Pencil className={sizes.icon} />
@@ -121,8 +121,8 @@ export function EditDeleteControls({
       )}
       {showDelete && (
         confirmDelete ? (
-          <div className={`flex items-center gap-2 bg-background rounded-lg px-2 py-1.5 md:px-2 md:py-1 border shadow-xl`}>
-            <span className={`${sizes.text} text-destructive`}>Delete?</span>
+          <div className={`flex items-center gap-2 bg-m3-surface rounded-lg px-2 py-1.5 md:px-2 md:py-1 border border-m3-outline shadow-xl`}>
+            <span className={`${sizes.text} text-m3-error`}>Delete?</span>
             <Button
               size="sm"
               variant="destructive"
@@ -148,7 +148,7 @@ export function EditDeleteControls({
             variant="ghost"
             onClick={() => setConfirmDelete(true)}
             disabled={isDeleting}
-            className={`${sizes.button} rounded-full bg-background hover:bg-background/90 text-destructive hover:text-destructive shadow-xl border transition-all hover:scale-110 touch-manipulation`}
+            className={`${sizes.button} rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-error hover:text-m3-error shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
             aria-label={deleteLabel}
           >
             <Trash2 className={sizes.icon} />
