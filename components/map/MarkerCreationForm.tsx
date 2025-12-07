@@ -84,43 +84,9 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
 
       const featureId = result.data.id
 
-      const uploadErrors: string[] = []
-
       if (photos.length > 0) {
-        for (let i = 0; i < photos.length; i++) {
-          const photo = photos[i]
-          const formData = new FormData()
-          formData.append('file', photo)
-          formData.append('is_primary', i === 0 ? 'true' : 'false')
-
-          try {
-            const photoResponse = await fetch(`/api/features/${featureId}/photos`, {
-              method: 'POST',
-              body: formData,
-            })
-
-            if (!photoResponse.ok) {
-              const errorText = await photoResponse.text()
-              let errorResult
-              try {
-                errorResult = JSON.parse(errorText)
-              } catch {
-                errorResult = { error: errorText || `HTTP ${photoResponse.status}` }
-              }
-              const errorMsg = errorResult.error || errorResult.details || photoResponse.statusText || 'Unknown error'
-              console.error(`Failed to upload photo ${i + 1}:`, {
-                status: photoResponse.status,
-                statusText: photoResponse.statusText,
-                error: errorResult,
-                fullResponse: errorText
-              })
-              uploadErrors.push(`Photo ${i + 1}: ${errorMsg}`)
-            }
-          } catch (photoError) {
-            console.error(`Photo upload error ${i + 1}:`, photoError)
-            uploadErrors.push(`Photo ${i + 1}: ${photoError instanceof Error ? photoError.message : 'Upload failed'}`)
-          }
-        }
+        const { uploadFeaturePhotos } = await import('@/lib/utils/photo-handler')
+        const { errors: uploadErrors } = await uploadFeaturePhotos(featureId, photos)
 
         if (uploadErrors.length > 0) {
           const errorMsg = `Feature created successfully, but ${uploadErrors.length} photo(s) failed to upload:\n\n${uploadErrors.join('\n')}\n\nCheck the browser console for more details.`
@@ -138,37 +104,21 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
     }
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     setError(null)
     
-    const validFiles: File[] = []
-    const previews: string[] = []
+    const { validatePhotoFiles, generatePhotoPreviews } = await import('@/lib/utils/photo-handler')
+    const { validFiles, errors } = validatePhotoFiles(files)
     
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        setError(`Only image files are allowed. ${file.name} is not an image.`)
-        return
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError(`Image size must be less than 5MB. ${file.name} is too large.`)
-        return
-      }
-
-      validFiles.push(file)
-      
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        previews.push(reader.result as string)
-        if (previews.length === validFiles.length) {
-          setPhotoPreviews((prev) => [...prev, ...previews])
-        }
-      }
-      reader.readAsDataURL(file)
-    })
+    if (errors.length > 0) {
+      setError(errors.join('\n'))
+    }
 
     if (validFiles.length > 0) {
       setPhotos((prev) => [...prev, ...validFiles])
+      const previews = await generatePhotoPreviews(validFiles)
+      setPhotoPreviews((prev) => [...prev, ...previews])
     }
   }
 

@@ -94,6 +94,19 @@ export async function POST(
       .from(STORAGE_BUCKET)
       .getPublicUrl(fileName)
 
+    if (isPrimary) {
+      const { error: unsetError } = await supabase
+        .from('feature_photos')
+        .update({ is_primary: false })
+        .eq('feature_id', featureId)
+        .eq('is_primary', true)
+        .is('deleted_at', null)
+
+      if (unsetError) {
+        console.error('Error unsetting previous primary photo:', unsetError)
+      }
+    }
+
     const photoData: FeaturePhotoInsert = {
       feature_id: featureId,
       photo_url: fileName,

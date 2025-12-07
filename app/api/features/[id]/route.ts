@@ -180,7 +180,7 @@ export async function DELETE(
 
     const existingFeature = await supabase
       .from('accessibility_features')
-      .select('created_by')
+      .select('id')
       .eq('id', id)
       .is('deleted_at', null)
       .single()
@@ -190,18 +190,6 @@ export async function DELETE(
         { error: 'Feature not found' },
         { status: 404 }
       )
-    }
-
-    if (existingFeature.data.created_by !== user.id) {
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      const isAdmin = authUser?.user_metadata?.role === 'admin'
-
-      if (!isAdmin) {
-        return NextResponse.json(
-          { error: 'Forbidden: You can only delete your own features' },
-          { status: 403 }
-        )
-      }
     }
 
     const { error } = await supabase

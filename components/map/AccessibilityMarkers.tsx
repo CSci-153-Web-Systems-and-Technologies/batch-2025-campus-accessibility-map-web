@@ -69,11 +69,11 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
       const [featuresResult, buildingsResult] = await Promise.all([
         safeFetch<ApiFeatureWithPhotos[]>(
           `/api/features?limit=${DEFAULT_FETCH_LIMIT}`,
-          abortController.signal
+          { signal: abortController.signal }
         ),
         safeFetch<DBBuilding[]>(
           `/api/buildings?limit=${DEFAULT_FETCH_LIMIT}`,
-          abortController.signal
+          { signal: abortController.signal }
         )
       ])
 

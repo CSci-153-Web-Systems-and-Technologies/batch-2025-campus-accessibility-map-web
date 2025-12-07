@@ -9,9 +9,14 @@ import type { FeatureComment } from '@/types/database'
 import type { Building as DBBuilding } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { FaHeart } from 'react-icons/fa'
-import { X } from 'lucide-react'
+import { X, Pencil, Trash2, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { useFeatureModal } from './FeatureModalContext'
+import { FeatureType } from '@/types/database'
+import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 
 interface FeaturePopupContentProps {
   feature: AccessibilityFeature
@@ -38,6 +43,23 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [selectedComment, setSelectedComment] = useState<CommentWithUser | null>(null)
+  const [isEditingFeature, setIsEditingFeature] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editFeatureData, setEditFeatureData] = useState({
+    title: feature.title,
+    description: feature.description || '',
+    feature_type: feature.feature_type,
+  })
+  const [editCommentContent, setEditCommentContent] = useState('')
+  const [isSavingFeature, setIsSavingFeature] = useState(false)
+  const [isSavingComment, setIsSavingComment] = useState(false)
+  const [isDeletingFeature, setIsDeletingFeature] = useState(false)
+  const [isDeletingComment, setIsDeletingComment] = useState(false)
+  const [newPhotos, setNewPhotos] = useState<File[]>([])
+  const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
+  const [photosToDelete, setPhotosToDelete] = useState<string[]>([])
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
+  const { closeModal } = useFeatureModal()
 
   useEffect(() => {
     const supabase = createClient()
@@ -54,7 +76,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       async function fetchBuilding() {
         const { data, error } = await safeFetch<DBBuilding>(
           `/api/buildings/${feature.building_id}`,
-          abortController.signal
+          { signal: abortController.signal }
         )
 
         if (!error && data) {
@@ -79,11 +101,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       const [commentsResult, likesResult] = await Promise.all([
         safeFetch<CommentWithUser[]>(
           `/api/features/${feature.id}/comments`,
-          abortController.signal
+          { signal: abortController.signal }
         ),
         safeFetch<LikeData>(
           `/api/features/${feature.id}/likes`,
-          abortController.signal
+          { signal: abortController.signal }
         )
       ])
 
@@ -147,6 +169,228 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     }
   }, [user, feature.id, isLiking, likeData.user_liked])
 
+  const isFeatureOwner = user?.id && feature.created_by && feature.created_by === user.id
+
+  const handleEditFeature = useCallback(() => {
+    setIsEditingFeature(true)
+    setEditFeatureData({
+      title: feature.title,
+      description: feature.description || '',
+      feature_type: feature.feature_type,
+    })
+    setNewPhotos([])
+    setNewPhotoPreviews([])
+    setPhotosToDelete([])
+  }, [feature])
+
+  const handleCancelEditFeature = useCallback(() => {
+    setIsEditingFeature(false)
+    setEditFeatureData({
+      title: feature.title,
+      description: feature.description || '',
+      feature_type: feature.feature_type,
+    })
+    setNewPhotos([])
+    setNewPhotoPreviews([])
+    setPhotosToDelete([])
+  }, [feature])
+
+  const handlePhotoChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    
+    const { validatePhotoFiles, generatePhotoPreviews } = await import('@/lib/utils/photo-handler')
+    const { validFiles, errors } = validatePhotoFiles(files)
+    
+    if (errors.length > 0) {
+      alert(errors.join('\n'))
+    }
+
+    if (validFiles.length > 0) {
+      setNewPhotos((prev) => [...prev, ...validFiles])
+      const previews = await generatePhotoPreviews(validFiles)
+      setNewPhotoPreviews((prev) => [...prev, ...previews])
+    }
+  }, [])
+
+  const removeNewPhoto = useCallback((index: number) => {
+    setNewPhotos((prev) => prev.filter((_, i) => i !== index))
+    setNewPhotoPreviews((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const handleDeletePhoto = useCallback((photoId: string) => {
+    setPhotosToDelete((prev) => [...prev, photoId])
+  }, [])
+
+  const handleUndoDeletePhoto = useCallback((photoId: string) => {
+    setPhotosToDelete((prev) => prev.filter((id) => id !== photoId))
+  }, [])
+
+  const handleSaveFeature = useCallback(async () => {
+    if (!isFeatureOwner || isSavingFeature) return
+
+    setIsSavingFeature(true)
+    setIsUploadingPhotos(true)
+    try {
+      const response = await fetch(`/api/features/${feature.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editFeatureData),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update feature')
+      }
+
+      const uploadErrors: string[] = []
+      const { deleteFeaturePhoto, uploadFeaturePhoto } = await import('@/lib/utils/photo-handler')
+
+      if (photosToDelete.length > 0) {
+        for (const photoId of photosToDelete) {
+          const result = await deleteFeaturePhoto(feature.id, photoId)
+          if (!result.success) {
+            uploadErrors.push(`Failed to delete photo: ${result.error || 'Unknown error'}`)
+          }
+        }
+      }
+
+      if (newPhotos.length > 0) {
+        const remainingPhotos = feature.photos?.filter(p => !photosToDelete.includes(p.id)) || []
+        const hasPrimaryPhoto = remainingPhotos.some(p => p.is_primary)
+        const shouldSetPrimary = !hasPrimaryPhoto && newPhotos.length > 0
+        
+        for (let i = 0; i < newPhotos.length; i++) {
+          const isPrimary = i === 0 && shouldSetPrimary
+          const result = await uploadFeaturePhoto(feature.id, newPhotos[i], isPrimary)
+          if (!result.success) {
+            uploadErrors.push(`Photo ${i + 1}: ${result.error || 'Upload failed'}`)
+          }
+        }
+      }
+
+      if (uploadErrors.length > 0) {
+        alert(`Feature updated, but some photo operations failed:\n\n${uploadErrors.join('\n')}`)
+      }
+
+      setIsEditingFeature(false)
+      window.location.reload()
+    } catch (error) {
+      console.error('Error updating feature:', error)
+      alert('Failed to update feature. Please try again.')
+    } finally {
+      setIsSavingFeature(false)
+      setIsUploadingPhotos(false)
+    }
+  }, [feature.id, editFeatureData, isFeatureOwner, isSavingFeature, isUploadingPhotos, newPhotos, photosToDelete, feature.photos])
+
+  const handleDeleteFeature = useCallback(async () => {
+    if (!isFeatureOwner || isDeletingFeature) return
+
+    setIsDeletingFeature(true)
+    try {
+      const response = await fetch(`/api/features/${feature.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete feature')
+      }
+
+      closeModal()
+      window.location.reload()
+    } catch (error) {
+      console.error('Error deleting feature:', error)
+      alert('Failed to delete feature. Please try again.')
+      setIsDeletingFeature(false)
+    }
+  }, [feature.id, isFeatureOwner, isDeletingFeature, closeModal])
+
+  const handleEditComment = useCallback((comment: CommentWithUser) => {
+    setEditingCommentId(comment.id)
+    setEditCommentContent(comment.content)
+  }, [])
+
+  const handleCancelEditComment = useCallback(() => {
+    setEditingCommentId(null)
+    setEditCommentContent('')
+  }, [])
+
+  const handleSaveComment = useCallback(async (commentId: string) => {
+    if (!editCommentContent.trim() || isSavingComment) return
+
+    setIsSavingComment(true)
+    try {
+      const response = await fetch(`/api/features/${feature.id}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editCommentContent.trim() }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update comment')
+      }
+
+      const result = await response.json()
+      if (result.data) {
+        setEditingCommentId(null)
+        setEditCommentContent('')
+        
+        const abortController = new AbortController()
+        const { data: commentsData, error: commentsError } = await safeFetch<CommentWithUser[]>(
+          `/api/features/${feature.id}/comments`,
+          { signal: abortController.signal }
+        )
+
+        if (!commentsError && commentsData) {
+          const flatComments: CommentWithUser[] = []
+          function flattenComments(comments: any[]) {
+            comments.forEach(comment => {
+              flatComments.push({
+                ...comment,
+                user_display_name: comment.user_display_name || null,
+                user_avatar_url: comment.user_avatar_url || null,
+              })
+              if (comment.replies && comment.replies.length > 0) {
+                flattenComments(comment.replies)
+              }
+            })
+          }
+          flattenComments(commentsData)
+          setComments(flatComments)
+        }
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error)
+      alert('Failed to update comment. Please try again.')
+    } finally {
+      setIsSavingComment(false)
+    }
+  }, [feature.id, editCommentContent, isSavingComment])
+
+  const handleDeleteComment = useCallback(async (commentId: string) => {
+    if (isDeletingComment) return
+
+    setIsDeletingComment(true)
+    try {
+      const response = await fetch(`/api/features/${feature.id}/comments/${commentId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete comment')
+      }
+
+      setComments(prev => prev.filter(c => c.id !== commentId))
+      if (selectedComment?.id === commentId) {
+        setSelectedComment(null)
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error)
+      alert('Failed to delete comment. Please try again.')
+    } finally {
+      setIsDeletingComment(false)
+    }
+  }, [feature.id, isDeletingComment, selectedComment])
+
   const handleSubmitComment = useCallback(async () => {
     if (!user || !commentText.trim() || isSubmittingComment) return
 
@@ -173,7 +417,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         const abortController = new AbortController()
         const { data: commentsData, error: commentsError } = await safeFetch<CommentWithUser[]>(
           `/api/features/${feature.id}/comments`,
-          abortController.signal
+          { signal: abortController.signal }
         )
 
         if (!commentsError && commentsData) {
@@ -206,7 +450,19 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     : null
 
   return (
-    <div className="w-full h-full flex flex-col bg-background rounded-lg border overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-background rounded-lg border overflow-hidden relative">
+      {isFeatureOwner && !isEditingFeature && (
+        <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50">
+          <EditDeleteControls
+            onEdit={handleEditFeature}
+            onDelete={handleDeleteFeature}
+            isDeleting={isDeletingFeature}
+            size="md"
+            editLabel="Edit feature"
+            deleteLabel="Delete feature"
+          />
+        </div>
+      )}
       <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-gradient-to-br from-card to-muted/20 h-1/2 min-h-0">
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
           <div className="relative w-full h-full flex items-center justify-center bg-muted rounded-xl overflow-hidden border-2 border-border">
@@ -247,14 +503,130 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         
         <div className="p-4 md:p-6 lg:p-8 lg:pl-4 flex flex-col min-w-0 min-h-0 overflow-y-auto">
           <div className="space-y-3 md:space-y-4">
-            <div>
-              <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-foreground leading-tight">
-                {feature.title}
-              </h1>
-              <div className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary font-semibold text-xs md:text-sm border border-primary/20">
-                {formatFeatureType(feature.feature_type)}
+            {isEditingFeature ? (
+              <div className="space-y-3">
+                <Input
+                  value={editFeatureData.title}
+                  onChange={(e) => setEditFeatureData({ ...editFeatureData, title: e.target.value })}
+                  placeholder="Title"
+                  className="text-2xl font-bold"
+                  maxLength={200}
+                />
+                <select
+                  value={editFeatureData.feature_type}
+                  onChange={(e) => setEditFeatureData({ ...editFeatureData, feature_type: e.target.value as FeatureType })}
+                  className="px-3 py-1.5 rounded-full bg-primary/10 text-primary font-semibold text-xs border border-primary/20"
+                >
+                  {Object.values(FeatureType).map(type => (
+                    <option key={type} value={type}>{formatFeatureType(type)}</option>
+                  ))}
+                </select>
+                <Textarea
+                  value={editFeatureData.description}
+                  onChange={(e) => setEditFeatureData({ ...editFeatureData, description: e.target.value })}
+                  placeholder="Description"
+                  className="min-h-[100px]"
+                  maxLength={1000}
+                />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-photos" className="flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    Photos
+                  </Label>
+                  
+                  {(feature.photos && feature.photos.length > 0) && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {feature.photos
+                        .filter(photo => !photosToDelete.includes(photo.id))
+                        .map((photo) => (
+                          <div key={photo.id} className="relative group">
+                            <img
+                              src={photo.full_url || photo.photo_url}
+                              alt="Feature photo"
+                              className="w-full h-24 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePhoto(photo.id)}
+                              className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center hover:bg-destructive/90 transition-colors opacity-0 group-hover:opacity-100"
+                              aria-label="Delete photo"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                  
+                  {photosToDelete.length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {photosToDelete.length} photo(s) marked for deletion
+                    </div>
+                  )}
+                  
+                  <Input
+                    id="edit-photos"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    multiple
+                    onChange={handlePhotoChange}
+                    className="mt-1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Upload new photos (max 5MB each)
+                  </p>
+                  
+                  {newPhotoPreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      {newPhotoPreviews.map((preview, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={preview}
+                            alt={`New photo ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeNewPhoto(index)}
+                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full w-6 h-6 flex items-center justify-center hover:bg-destructive/90 transition-colors"
+                            aria-label={`Remove photo ${index + 1}`}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSaveFeature}
+                    disabled={isSavingFeature || isUploadingPhotos || !editFeatureData.title.trim()}
+                    className="flex-1"
+                  >
+                    {isSavingFeature || isUploadingPhotos ? 'Saving...' : 'Save'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelEditFeature}
+                    disabled={isSavingFeature || isUploadingPhotos}
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-foreground leading-tight">
+                  {feature.title}
+                </h1>
+                <div className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-primary/10 text-primary font-semibold text-xs md:text-sm border border-primary/20">
+                  {formatFeatureType(feature.feature_type)}
+                </div>
+              </div>
+            )}
 
             {building && (
               <div className="pt-1 md:pt-2">
@@ -313,20 +685,80 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                   ? comment.content.substring(0, 100) + '...' 
                   : comment.content
                 
+                const isCommentOwner = user?.id && comment.user_id && comment.user_id === user.id
+                const isEditing = editingCommentId === comment.id
+
                 return (
                   <article
                     key={comment.id}
-                    onClick={() => setSelectedComment(comment)}
-                    className="p-4 md:p-5 border rounded-xl hover:bg-muted/50 transition-all bg-card shadow-sm hover:shadow-md cursor-pointer flex flex-col min-h-[112px] md:min-h-[128px]"
+                    className="p-4 md:p-5 border rounded-xl hover:bg-muted/50 transition-all bg-card shadow-sm hover:shadow-md flex flex-col min-h-[112px] md:min-h-[128px] relative"
                   >
-                    <div className="flex-1 min-w-0 mb-4">
-                      <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-2 break-words">
-                        {previewText}
-                      </p>
-                      {isLongComment && (
-                        <p className="text-xs text-muted-foreground mt-2 italic">
-                          Click to read more...
-                        </p>
+                    {isCommentOwner && (
+                      <div 
+                        className="absolute top-2 right-2 z-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <EditDeleteControls
+                          onEdit={() => handleEditComment(comment)}
+                          onDelete={() => handleDeleteComment(comment.id)}
+                          isEditing={isEditing}
+                          isDeleting={isDeletingComment}
+                          showEdit={!isEditing}
+                          size="sm"
+                          editLabel="Edit comment"
+                          deleteLabel="Delete comment"
+                          className="gap-1.5 md:gap-1"
+                        />
+                      </div>
+                    )}
+                    <div 
+                      className="flex-1 min-w-0 mb-4 cursor-pointer"
+                      onClick={() => !isEditing && setSelectedComment(comment)}
+                    >
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editCommentContent}
+                            onChange={(e) => setEditCommentContent(e.target.value)}
+                            placeholder="Edit comment"
+                            className="min-h-[80px] text-sm"
+                            maxLength={2000}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleSaveComment(comment.id)
+                              }}
+                              disabled={isSavingComment || !editCommentContent.trim()}
+                            >
+                              {isSavingComment ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleCancelEditComment()
+                              }}
+                              disabled={isSavingComment}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-2 break-words">
+                            {previewText}
+                          </p>
+                          {isLongComment && (
+                            <p className="text-xs text-muted-foreground mt-2 italic">
+                              Click to read more...
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                     
@@ -416,11 +848,31 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           <div className="relative w-full max-w-2xl max-h-[80vh] bg-background rounded-lg border shadow-2xl overflow-hidden flex flex-col">
             <button
               onClick={() => setSelectedComment(null)}
-              className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-8 h-8 md:w-9 md:h-9 rounded-full bg-background hover:bg-background/90 text-foreground flex items-center justify-center shadow-xl border transition-all hover:scale-110"
+              className="absolute top-2 right-2 md:top-4 md:right-4 z-50 w-10 h-10 md:w-9 md:h-9 rounded-full bg-background hover:bg-background/90 text-foreground flex items-center justify-center shadow-xl border transition-all hover:scale-110 touch-manipulation"
               aria-label="Close comment"
             >
-              <X className="w-4 h-4 md:w-5 md:h-5" />
+              <X className="w-5 h-5 md:w-5 md:h-5" />
             </button>
+            {selectedComment && user?.id && selectedComment.user_id && selectedComment.user_id === user.id && (
+              <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50 flex items-center gap-2">
+                {editingCommentId === selectedComment.id ? null : (
+                  <>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <EditDeleteControls
+                        onEdit={() => handleEditComment(selectedComment)}
+                        onDelete={() => handleDeleteComment(selectedComment.id)}
+                        isEditing={editingCommentId === selectedComment.id}
+                        isDeleting={isDeletingComment}
+                        showEdit={editingCommentId !== selectedComment.id}
+                        size="md"
+                        editLabel="Edit comment"
+                        deleteLabel="Delete comment"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <article className="space-y-4">
                 <div className="flex items-start gap-3 md:gap-4">
@@ -458,9 +910,43 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                   </div>
                 </div>
                 <div className="pt-2 border-t">
-                  <p className="text-sm md:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
-                    {selectedComment.content}
-                  </p>
+                  {editingCommentId === selectedComment.id ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={editCommentContent}
+                        onChange={(e) => setEditCommentContent(e.target.value)}
+                        placeholder="Edit comment"
+                        className="min-h-[120px] text-sm"
+                        maxLength={2000}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSaveComment(selectedComment.id)
+                          }}
+                          disabled={isSavingComment || !editCommentContent.trim()}
+                        >
+                          {isSavingComment ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingCommentId(null)
+                            setEditCommentContent('')
+                          }}
+                          disabled={isSavingComment}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm md:text-base text-foreground leading-relaxed whitespace-pre-wrap break-words">
+                      {selectedComment.content}
+                    </p>
+                  )}
                 </div>
               </article>
             </div>

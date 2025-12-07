@@ -1,34 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { FaBuilding } from 'react-icons/fa'
-import { createClient } from '@/lib/supabase/client'
 import { useBuildingCreation } from './BuildingCreationContext'
+import { useAdmin } from '@/lib/hooks/use-admin'
 
 export function AddBuildingButton() {
   const { setCreating } = useBuildingCreation()
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function checkAdmin() {
-      try {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user) {
-          const role = user.user_metadata?.role
-          setIsAdmin(role === 'admin')
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    checkAdmin()
-  }, [])
+  const { isAdmin, isLoading } = useAdmin()
 
   if (isLoading || !isAdmin) {
     return null
