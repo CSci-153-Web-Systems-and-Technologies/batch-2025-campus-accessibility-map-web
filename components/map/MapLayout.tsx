@@ -6,16 +6,13 @@ import { AddMarkerButton } from './AddMarkerButton'
 import { AddBuildingButton } from './AddBuildingButton'
 import { MarkerCreationProvider, useMarkerCreation } from './MarkerCreationContext'
 import { BuildingCreationProvider, useBuildingCreation } from './BuildingCreationContext'
-import { BuildingProvider, useBuilding } from './BuildingContext'
 import { CreationModeOverlay } from './CreationModeOverlay'
 import { BuildingCreationOverlay } from './BuildingCreationOverlay'
 import { MarkerCreationModal } from './MarkerCreationModal'
 import { BuildingCreationModal } from './BuildingCreationModal'
 import { CampusMapWrapper } from './CampusMapWrapper'
-import { BuildingSearch } from './BuildingSearch'
 import { FiltersDrawer } from './FiltersDrawer'
 import { MapFiltersProvider } from './MapFiltersContext'
-import { MapControlProvider } from './MapControlContext'
 import { FeatureModalProvider } from './FeatureModalContext'
 import { FeatureModal } from './FeatureModal'
 import { BuildingModalProvider } from './BuildingModalContext'
@@ -39,7 +36,6 @@ function MapLayoutContent({
           <CampusMapWrapper />
           {!hasOverlay && (
             <>
-              <BuildingSearch />
               <FiltersDrawer />
               <AddMarkerButton />
               <AddBuildingButton />
@@ -96,17 +92,13 @@ export function MapLayout({
   return (
     <MarkerCreationProvider>
       <BuildingCreationProvider>
-        <BuildingProvider>
-          <FeatureModalProvider>
-            <BuildingModalProvider>
-              <MapFiltersProvider>
-                <MapControlProvider>
-                  <MapLayoutContent>{children}</MapLayoutContent>
-                </MapControlProvider>
-              </MapFiltersProvider>
-            </BuildingModalProvider>
-          </FeatureModalProvider>
-        </BuildingProvider>
+        <FeatureModalProvider>
+          <BuildingModalProvider>
+            <MapFiltersProvider>
+              <MapLayoutContent>{children}</MapLayoutContent>
+            </MapFiltersProvider>
+          </BuildingModalProvider>
+        </FeatureModalProvider>
       </BuildingCreationProvider>
     </MarkerCreationProvider>
   )

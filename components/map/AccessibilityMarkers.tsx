@@ -10,9 +10,12 @@ import { FeatureType } from '@/types/database'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
 import type { Building as DBBuilding } from '@/types/database'
+import { transformApiFeatureToMapFeature } from '@/lib/utils/feature-transform'
+import { transformApiBuildingToMapBuilding } from '@/lib/utils/building-transform'
+import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 import { useMapFilters } from './MapFiltersContext'
 import { useFeatureModal } from './FeatureModalContext'
-import { useBuilding } from './BuildingContext'
+import { useBuildingModal } from './BuildingModalContext'
 
 interface AccessibilityMarkersProps {
   refreshTrigger?: number
@@ -45,7 +48,7 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
   const [error, setError] = useState<string | null>(null)
   const { isFeatureTypeEnabled } = useMapFilters()
   const { openModal } = useFeatureModal()
-  const { selectedBuilding } = useBuilding()
+  const { selectedBuilding } = useBuildingModal()
   const map = useMap()
 
   const iconCache = useMemo(() => {
@@ -65,11 +68,11 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
 
       const [featuresResult, buildingsResult] = await Promise.all([
         safeFetch<ApiFeatureWithPhotos[]>(
-          '/api/features?limit=100',
+          `/api/features?limit=${DEFAULT_FETCH_LIMIT}`,
           abortController.signal
         ),
         safeFetch<DBBuilding[]>(
-          '/api/buildings?limit=100',
+          `/api/buildings?limit=${DEFAULT_FETCH_LIMIT}`,
           abortController.signal
         )
       ])
@@ -82,30 +85,12 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
       }
 
       if (featuresResult.data) {
-        const featuresData: AccessibilityFeature[] = featuresResult.data.map((feature) => ({
-          ...feature,
-          feature_type: feature.feature_type as FeatureType,
-          coordinates: [feature.latitude, feature.longitude] as [number, number],
-          photos: (feature.photos || []).map(photo => ({
-            id: photo.id,
-            feature_id: feature.id,
-            photo_url: photo.photo_url,
-            full_url: photo.full_url,
-            uploaded_by: '',
-            caption: null,
-            is_primary: photo.is_primary,
-            created_at: '',
-            deleted_at: null,
-          })),
-        }))
+        const featuresData: AccessibilityFeature[] = featuresResult.data.map(transformApiFeatureToMapFeature)
         setFeatures(featuresData)
       }
 
       if (buildingsResult.data) {
-        const buildingsData: Building[] = buildingsResult.data.map((building) => ({
-          ...building,
-          coordinates: [building.latitude, building.longitude] as [number, number],
-        }))
+        const buildingsData: Building[] = buildingsResult.data.map(transformApiBuildingToMapBuilding)
         setBuildings(buildingsData)
       }
 

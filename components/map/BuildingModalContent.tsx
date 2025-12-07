@@ -6,7 +6,8 @@ import { FeaturePhoto } from './FeaturePhoto'
 import { formatFeatureType } from '@/lib/utils/feature-utils'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
-import { FeatureType } from '@/types/database'
+import { transformApiFeatureToMapFeature } from '@/lib/utils/feature-transform'
+import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 import { useFeatureModal } from './FeatureModalContext'
 import { useBuildingModal } from './BuildingModalContext'
 
@@ -30,7 +31,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       setError(null)
 
       const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
-        `/api/features?building_id=${building.id}&limit=100`,
+        `/api/features?building_id=${building.id}&limit=${DEFAULT_FETCH_LIMIT}`,
         abortController.signal
       )
 
@@ -44,22 +45,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       }
 
       if (data) {
-        const featuresData: AccessibilityFeature[] = data.map((feature) => ({
-          ...feature,
-          feature_type: feature.feature_type as FeatureType,
-          coordinates: [feature.latitude, feature.longitude] as [number, number],
-          photos: (feature.photos || []).map(photo => ({
-            id: photo.id,
-            feature_id: feature.id,
-            photo_url: photo.photo_url,
-            full_url: photo.full_url,
-            uploaded_by: '',
-            caption: null,
-            is_primary: photo.is_primary,
-            created_at: '',
-            deleted_at: null,
-          })),
-        }))
+        const featuresData: AccessibilityFeature[] = data.map(transformApiFeatureToMapFeature)
         setFeatures(featuresData)
       }
 

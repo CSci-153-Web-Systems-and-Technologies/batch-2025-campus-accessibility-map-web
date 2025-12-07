@@ -8,28 +8,26 @@ import { MapClickHandler } from './MapClickHandler'
 import { BuildingCreationClickHandler } from './BuildingCreationClickHandler'
 import { useMarkerCreation } from './MarkerCreationContext'
 import { useBuildingCreation } from './BuildingCreationContext'
-import { useBuilding } from './BuildingContext'
 import { useBuildingModal } from './BuildingModalContext'
 import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
-import { MapControlInitializer } from './MapControlInitializer'
+import { BuildingSearchMapControl } from './BuildingSearch'
 import type { Building } from '@/types/map'
 
 export default function CampusMap() {
   const [isMounted, setIsMounted] = useState(false)
   const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
   const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, buildingsRefreshTrigger } = useBuildingCreation()
-  const { selectBuilding, selectedBuilding } = useBuilding()
-  const { openModal: openBuildingModal, isOpen: isBuildingModalOpen } = useBuildingModal()
+  const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
 
   const handleMapClick = useCallback((coordinates: [number, number]) => {
     if (isCreating) {
       setClickedCoordinates(coordinates)
       openModal()
     } else if (!isCreatingBuilding && selectedBuilding && !isBuildingModalOpen) {
-      selectBuilding(null)
+      closeBuildingModal()
     }
-  }, [isCreating, isCreatingBuilding, setClickedCoordinates, openModal, selectedBuilding, isBuildingModalOpen, selectBuilding])
+  }, [isCreating, isCreatingBuilding, setClickedCoordinates, openModal, selectedBuilding, isBuildingModalOpen, closeBuildingModal])
 
   const handleBuildingMapClick = useCallback((coordinates: [number, number]) => {
     if (isCreatingBuilding) {
@@ -38,13 +36,12 @@ export default function CampusMap() {
   }, [isCreatingBuilding, setBuildingCoordinates])
 
   const handleBuildingClick = useCallback((building: Building, event?: { latlng?: { lat: number, lng: number }, screenPoint?: { x: number, y: number } }) => {
-    selectBuilding(building)
     const origin = event?.screenPoint ? {
       x: event.screenPoint.x,
       y: event.screenPoint.y,
     } : undefined
     openBuildingModal(building, origin)
-  }, [selectBuilding, openBuildingModal])
+  }, [openBuildingModal])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -69,13 +66,13 @@ export default function CampusMap() {
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | VSU Campus Accessibility Map'
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Campus Accessibility Map'
       />
+      <BuildingSearchMapControl />
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
       <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
       <BuildingsPolygons refreshTrigger={buildingsRefreshTrigger} onBuildingClick={handleBuildingClick} />
-      <MapControlInitializer />
     </MapContainer>
   )
 }

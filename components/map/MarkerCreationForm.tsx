@@ -237,16 +237,6 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
       </div>
 
       <div>
-        <Label>Location</Label>
-        <div className="mt-1 px-3 py-2 border border-input bg-muted rounded-md text-sm text-muted-foreground">
-          {initialLat.toFixed(6)}, {initialLng.toFixed(6)}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Coordinates set from map click
-        </p>
-      </div>
-
-      <div>
         <Label htmlFor="photos">Photos</Label>
         <Input
           id="photos"

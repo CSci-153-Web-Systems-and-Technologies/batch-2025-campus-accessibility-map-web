@@ -3,20 +3,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { useMap } from 'react-leaflet'
 import { useBuildingModal } from './BuildingModalContext'
-import { useBuilding } from './BuildingContext'
-import { useMapControl } from './MapControlContext'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { Building } from '@/types/map'
 import type { Building as DBBuilding } from '@/types/database'
+import { transformApiBuildingToMapBuilding } from '@/lib/utils/building-transform'
 
-export function BuildingSearch() {
+// Component that must be used inside MapContainer
+export function BuildingSearchMapControl() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Building[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
   const { openModal } = useBuildingModal()
-  const { mapInstance } = useMapControl()
+  const mapInstance = useMap()
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -38,10 +39,7 @@ export function BuildingSearch() {
           console.error('Error searching buildings:', error)
           setSearchResults([])
         } else if (data) {
-          const buildingsData: Building[] = data.map((building) => ({
-            ...building,
-            coordinates: [building.latitude, building.longitude] as [number, number],
-          }))
+          const buildingsData: Building[] = data.map(transformApiBuildingToMapBuilding)
           setSearchResults(buildingsData)
           setShowResults(true)
         }
@@ -77,57 +75,59 @@ export function BuildingSearch() {
   }, [])
 
   return (
-    <div className="absolute top-4 left-16 z-[1000] w-full max-w-sm">
-      <div className="relative">
+    <div className="absolute top-4 left-16 z-[1000] w-full max-w-sm pointer-events-none">
+      <div className="pointer-events-auto">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            type="text"
-            placeholder="Search buildings..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchResults.length > 0 && setShowResults(true)}
-            className="pl-10 pr-10"
-          />
-          {searchQuery && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              type="text"
+              placeholder="Search buildings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => searchResults.length > 0 && setShowResults(true)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {showResults && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg max-h-64 overflow-y-auto z-[1001]">
+              {isSearching && (
+                <div className="p-4 text-sm text-muted-foreground text-center">
+                  Searching...
+                </div>
+              )}
+              {!isSearching && searchResults.map((building) => (
+                <button
+                  key={building.id}
+                  onClick={() => handleBuildingSelect(building)}
+                  className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b last:border-b-0"
+                >
+                  <div className="font-medium">{building.name}</div>
+                  {building.description && (
+                    <div className="text-sm text-muted-foreground truncate">
+                      {building.description}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showResults && searchQuery && !isSearching && searchResults.length === 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg p-4 text-sm text-muted-foreground text-center z-[1001]">
+              No buildings found
+            </div>
           )}
         </div>
-
-        {showResults && searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg max-h-64 overflow-y-auto z-[1001]">
-            {isSearching && (
-              <div className="p-4 text-sm text-muted-foreground text-center">
-                Searching...
-              </div>
-            )}
-            {!isSearching && searchResults.map((building) => (
-              <button
-                key={building.id}
-                onClick={() => handleBuildingSelect(building)}
-                className="w-full px-4 py-3 text-left hover:bg-muted transition-colors border-b last:border-b-0"
-              >
-                <div className="font-medium">{building.name}</div>
-                {building.description && (
-                  <div className="text-sm text-muted-foreground truncate">
-                    {building.description}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showResults && searchQuery && !isSearching && searchResults.length === 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg p-4 text-sm text-muted-foreground text-center z-[1001]">
-            No buildings found
-          </div>
-        )}
       </div>
     </div>
   )

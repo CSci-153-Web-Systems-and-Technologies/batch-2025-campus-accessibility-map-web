@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { FeatureType, type AccessibilityFeatureUpdate } from '@/types/database'
+import { processFeaturePhotos } from '@/lib/api/photo-utils'
 
 export async function GET(
   request: Request,
@@ -27,29 +28,7 @@ export async function GET(
       )
     }
 
-    const STORAGE_BUCKET = 'feature-photos'
-    const photos = ((data as any).feature_photos || [])
-      .filter((photo: any) => !photo.deleted_at)
-      .map((photo: any) => {
-        const publicUrl = supabase.storage
-          .from(STORAGE_BUCKET)
-          .getPublicUrl(photo.photo_url)
-        return {
-          ...photo,
-          full_url: publicUrl.data.publicUrl,
-        }
-      })
-      .sort((a: any, b: any) => {
-        if (a.is_primary) return -1
-        if (b.is_primary) return 1
-        return 0
-      })
-
-    const featureWithPhotos = {
-      ...data,
-      photos,
-      feature_photos: undefined,
-    }
+    const featureWithPhotos = processFeaturePhotos(data, supabase)
 
     return NextResponse.json({ data: featureWithPhotos })
   } catch (error) {

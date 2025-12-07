@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import { Polygon } from 'react-leaflet'
 import type { Building } from '@/types/map'
-import { useBuilding } from './BuildingContext'
+import { useBuildingModal } from './BuildingModalContext'
 import { useBuildingCreation } from './BuildingCreationContext'
 import { useMarkerCreation } from './MarkerCreationContext'
 import { DraggableBuildingPolygonEditor } from './DraggableBuildingPolygonEditor'
 import { safeFetch } from '@/lib/fetch-utils'
-import type { Building } from '@/types/database'
+import type { Building as DBBuilding } from '@/types/database'
+import { transformApiBuildingToMapBuilding } from '@/lib/utils/building-transform'
+import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 
 interface BuildingsPolygonsProps {
   refreshTrigger?: number
@@ -46,7 +48,7 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
   const [buildings, setBuildings] = useState<Building[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { selectedBuilding } = useBuilding()
+  const { selectedBuilding } = useBuildingModal()
   const { 
     clickedCoordinates: creatingCoordinates, 
     isCreating, 
@@ -66,8 +68,8 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
       setIsLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await safeFetch<Building[]>(
-        '/api/buildings?limit=100',
+      const { data, error: fetchError } = await safeFetch<DBBuilding[]>(
+        `/api/buildings?limit=${DEFAULT_FETCH_LIMIT}`,
         abortController.signal
       )
 
@@ -81,10 +83,7 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
       }
 
       if (data) {
-        const buildingsData: Building[] = data.map((building) => ({
-          ...building,
-          coordinates: [building.latitude, building.longitude] as [number, number],
-        }))
+        const buildingsData: Building[] = data.map(transformApiBuildingToMapBuilding)
         setBuildings(buildingsData)
       }
 
