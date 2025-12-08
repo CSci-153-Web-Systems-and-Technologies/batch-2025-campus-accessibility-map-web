@@ -23,19 +23,11 @@ A modern, interactive web application for mapping and managing accessibility fea
 - **Content Reporting**: Report inappropriate comments or features with required reason
 - **Admin Moderation**: Dedicated moderation dashboard for administrators
 - **Report Management**: View, resolve, and delete reported content
-- **Soft Deletion**: Content is soft-deleted, allowing admins to review before permanent removal
-
-### Advanced Features
-- **Real-time Updates**: Live updates when features, comments, or buildings are added
-- **Filter System**: Filter map markers by feature type (ramp, elevator, accessible restroom, parking, restroom, bench)
-- **Full-screen Image Viewing**: Click any photo to view it in full-screen mode
-- **Mobile-optimized**: Hamburger menu, compact controls, and touch-friendly interface for mobile devices
-- **Accessibility First**: Built with accessibility in mind, following Material Design 3 principles
 
 ## 🚀 Tech Stack
 
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript
-- **Backend**: Supabase (PostgreSQL, Auth, Storage, Row Level Security)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Row Level Security, Edge Functions)
 - **Map Library**: Leaflet with React-Leaflet
 - **Styling**: Tailwind CSS with Material Design 3 (M3) color system
 - **UI Components**: shadcn/ui components with custom M3 styling
@@ -53,6 +45,7 @@ Before you begin, ensure you have:
 - A Supabase account and project
 - Git installed on your machine
 - npm, yarn, or pnpm package manager
+- Supabase CLI (for deploying Edge Functions)
 
 ## 🛠️ Installation
 
@@ -76,7 +69,7 @@ Before you begin, ensure you have:
    Create a `.env.local` file in the root directory with the following variables:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
    ```
 
    You can find these values in your [Supabase project's API settings](https://supabase.com/dashboard/project/_/settings/api).
@@ -110,7 +103,14 @@ Before you begin, ensure you have:
 
    Set appropriate RLS policies for public read access and authenticated write access.
 
-6. **Admin User Setup**
+6. **Deploy Edge Functions**
+   
+   Deploy the account deletion Edge Function:
+   ```bash
+   supabase functions deploy delete_account
+   ```
+
+7. **Admin User Setup**
    
    To create an admin user, run the SQL script in `supabase/migrations/20251202143600_create_admin_user.sql` or manually set a user's role to 'admin' in the `auth.users` table metadata:
    
@@ -236,6 +236,8 @@ batch-2025-campus-accessibility-map-web/
 │   │   └── ...                  # Other utilities
 │   └── supabase/                # Supabase configuration
 ├── supabase/
+│   ├── functions/               # Supabase Edge Functions
+│   │   └── delete_account/      # Account deletion function
 │   └── migrations/              # Database migrations
 ├── types/                       # TypeScript definitions
 │   ├── database.ts              # Database types
@@ -250,7 +252,9 @@ batch-2025-campus-accessibility-map-web/
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Your Supabase publishable key | Yes |
+
+**Note:** The service role key is automatically available in Supabase Edge Functions and does not need to be stored in your Next.js environment variables.
 
 ### Map Configuration
 
@@ -293,6 +297,7 @@ The application uses Material Design 3 (M3) color system with:
 - **Admin-only Features**: Moderation and building creation restricted to admins
 - **Input Validation**: All API endpoints validate input data
 - **Soft Deletion**: Content is soft-deleted, preserving data integrity
+- **Edge Functions**: Sensitive operations (like account deletion) use Supabase Edge Functions to keep service role keys secure
 
 ## 📱 Mobile Support
 
@@ -318,9 +323,14 @@ The application uses Material Design 3 (M3) color system with:
 
 3. **Configure Environment Variables**
    - Add `NEXT_PUBLIC_SUPABASE_URL`
-   - Add `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - Add `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-4. **Deploy**
+4. **Deploy Edge Functions**
+   ```bash
+   supabase functions deploy delete_account
+   ```
+
+5. **Deploy**
    - Click "Deploy"
    - Wait for build to complete
    - Your app will be live!
