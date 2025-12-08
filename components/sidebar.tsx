@@ -6,14 +6,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useTheme } from '@/lib/hooks/use-theme';
+import { useAdmin } from '@/lib/hooks/use-admin';
 import { CgProfile } from 'react-icons/cg';
 import { FaMap } from 'react-icons/fa';
 import { IoSettings } from 'react-icons/io5';
 import { FiLogOut } from 'react-icons/fi';
+import { Shield } from 'lucide-react';
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isAdmin } = useAdmin();
   // Initialize theme system
   useTheme();
 
@@ -86,6 +89,26 @@ export function Sidebar() {
             </span>
           </span>
         </Link>
+
+        {isAdmin && (
+          <Link
+            href="/moderation"
+            className={`${baseLinkClasses} ${
+              pathname === "/moderation"
+                ? "bg-m3-primary text-m3-on-primary"
+                : inactiveClasses
+            }`}
+          >
+            <span className="flex w-10 items-center justify-center">
+              <Shield className="w-5 h-5" />
+            </span>
+            <span className="flex-1 overflow-hidden">
+              <span className="block pl-1 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                Moderation
+              </span>
+            </span>
+          </Link>
+        )}
       </nav>
       
       <div className="p-3 border-t border-m3-outline space-y-3">

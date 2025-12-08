@@ -150,17 +150,38 @@ export async function DELETE(
         { status: 400 }
       )
     }
+
+    const isAdmin = user.user_metadata?.role === 'admin'
+    const isCommenter = existingComment.data.user_id === user.id
+
+    if (!isAdmin && !isCommenter) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only the commenter or an admin can delete this comment' },
+        { status: 403 }
+      )
+    }
     
-    const { error } = await supabase
+    const { data: updateData, error } = await supabase
       .from('feature_comments')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', commentId)
+      .select('id, deleted_at')
 
     if (error) {
       console.error('Error deleting comment:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       return NextResponse.json(
-        { error: 'Failed to delete comment', details: error.message },
+        { error: 'Failed to delete comment', details: error.message, code: error.code },
         { status: 500 }
+      )
+    }
+
+    // Verify the update actually happened
+    if (!updateData || updateData.length === 0) {
+      console.error('Update returned no rows - RLS policy may have blocked the update')
+      return NextResponse.json(
+        { error: 'Update failed: No rows were updated. This may be due to RLS policies.' },
+        { status: 403 }
       )
     }
 
