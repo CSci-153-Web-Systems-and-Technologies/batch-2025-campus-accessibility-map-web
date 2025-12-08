@@ -158,10 +158,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow max-w-4xl mx-auto">
-      <div className="flex items-center gap-6 mb-8 pb-6 border-b border-m3-outline">
+    <div className="bg-m3-surface text-m3-on-surface p-3 sm:p-4 md:p-6 rounded-lg shadow max-w-4xl mx-auto">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-m3-outline">
         <div>
-          <div className="w-24 h-24 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden border-2 border-m3-outline">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden border-2 border-m3-outline">
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
@@ -175,9 +175,9 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-m3-primary mb-2">{displayName}</h1>
-          <p className="text-m3-on-surface-variant">{user?.email}</p>
+        <div className="flex-1 text-center sm:text-left w-full sm:w-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-m3-primary mb-2">{displayName}</h1>
+          <p className="text-sm sm:text-base text-m3-on-surface-variant break-words">{user?.email}</p>
         </div>
       </div>
 
@@ -193,13 +193,13 @@ export default function ProfilePage() {
                   key={feature.id}
                   className="p-4 border border-m3-outline rounded-lg hover:bg-m3-surface-variant/50 transition-colors bg-m3-secondary-container"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                     <div 
-                      className="flex-1 cursor-pointer"
+                      className="flex-1 cursor-pointer min-w-0 w-full sm:w-auto"
                       onClick={() => handleFeatureClick(feature.id)}
                     >
-                      <h3 className="font-semibold text-lg mb-1 text-m3-on-secondary-container">{feature.title}</h3>
-                      <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-base sm:text-lg mb-1 text-m3-on-secondary-container break-words">{feature.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
                         <FeatureTypeBadge 
                           featureType={feature.feature_type as FeatureType} 
                           size="sm"

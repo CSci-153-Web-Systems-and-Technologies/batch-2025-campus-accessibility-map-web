@@ -188,14 +188,15 @@ export default function ModerationPage() {
   }
 
   return (
-    <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-m3-primary mb-6">Moderation</h1>
+    <div className="bg-m3-surface text-m3-on-surface p-3 sm:p-4 md:p-6 rounded-lg shadow max-w-6xl mx-auto">
+      <h1 className="text-2xl sm:text-3xl font-bold text-m3-primary mb-4 sm:mb-6">Moderation</h1>
 
-      <div className="mb-6 flex gap-3">
+      <div className="mb-4 sm:mb-6 flex flex-wrap gap-2 sm:gap-3">
         <Button
           variant={filter === 'unresolved' ? 'default' : 'outline'}
           onClick={() => setFilter('unresolved')}
           size="sm"
+          className="flex-1 sm:flex-initial min-w-[100px]"
         >
           Unresolved
         </Button>
@@ -203,6 +204,7 @@ export default function ModerationPage() {
           variant={filter === 'resolved' ? 'default' : 'outline'}
           onClick={() => setFilter('resolved')}
           size="sm"
+          className="flex-1 sm:flex-initial min-w-[100px]"
         >
           Resolved
         </Button>
@@ -210,6 +212,7 @@ export default function ModerationPage() {
           variant={filter === 'all' ? 'default' : 'outline'}
           onClick={() => setFilter('all')}
           size="sm"
+          className="flex-1 sm:flex-initial min-w-[100px]"
         >
           All
         </Button>
@@ -224,20 +227,22 @@ export default function ModerationPage() {
           {reports.map((report) => (
             <div
               key={report.id}
-              className={`border rounded-lg p-4 ${
+              className={`border rounded-lg p-3 sm:p-4 ${
                 report.resolved_at
                   ? 'bg-m3-surface-variant border-m3-outline-variant'
                   : 'bg-m3-secondary-container border-m3-outline'
               }`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-3">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4">
+                <div className="flex-1 space-y-3 min-w-0 w-full sm:w-auto">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-medium text-m3-on-surface-variant">Reported by:</span>
-                      <span className="text-sm text-m3-on-surface">
-                        {report.reporter?.display_name || 'Unknown User'}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-m3-on-surface-variant">Reported by:</span>
+                        <span className="text-sm text-m3-on-surface">
+                          {report.reporter?.display_name || 'Unknown User'}
+                        </span>
+                      </div>
                       <span className="text-xs text-m3-on-surface-variant">
                         {new Date(report.created_at).toLocaleDateString()}
                       </span>
@@ -251,7 +256,7 @@ export default function ModerationPage() {
                     {report.type === 'comment' ? (
                       <div className="flex items-start gap-3 mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
                             <span className="text-sm font-medium text-m3-on-surface-variant">Comment:</span>
                             {report.feature_comments.deleted_at && (
                               <span className="text-xs px-2 py-0.5 bg-m3-error-container text-m3-on-error-container rounded">
@@ -284,7 +289,7 @@ export default function ModerationPage() {
                     ) : (
                       <div className="flex items-start gap-3 mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
                             <span className="text-sm font-medium text-m3-on-surface-variant">Feature:</span>
                             {report.accessibility_features.deleted_at && (
                               <span className="text-xs px-2 py-0.5 bg-m3-error-container text-m3-on-error-container rounded">
@@ -321,11 +326,11 @@ export default function ModerationPage() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col sm:flex-row sm:flex-col gap-2 w-full sm:w-auto">
                   {!report.resolved_at && (
                     <>
                       {confirmDelete?.id === report.id ? (
-                        <div className="flex flex-col gap-2 p-2 bg-m3-error-container border border-m3-error rounded-lg">
+                        <div className="flex flex-col gap-2 p-2 bg-m3-error-container border border-m3-error rounded-lg w-full sm:w-auto">
                           <p className="text-xs text-m3-on-error-container font-medium">Delete {report.type}?</p>
                           <div className="flex gap-2">
                             <Button
@@ -359,7 +364,7 @@ export default function ModerationPage() {
                             variant="outline"
                             onClick={() => handleResolve(report.id, true, report.type)}
                             disabled={resolvingId === report.id || deletingId === report.id}
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                           >
                             {resolvingId === report.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -378,7 +383,7 @@ export default function ModerationPage() {
                               (report.type === 'comment' && !!report.feature_comments.deleted_at) ||
                               (report.type === 'feature' && !!report.accessibility_features.deleted_at)
                             }
-                            className="gap-2 text-m3-error border-m3-error hover:bg-m3-error-container hover:text-m3-on-error-container disabled:opacity-50"
+                            className="gap-2 text-m3-error border-m3-error hover:bg-m3-error-container hover:text-m3-on-error-container disabled:opacity-50 w-full sm:w-auto"
                           >
                             {deletingId === report.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -397,7 +402,7 @@ export default function ModerationPage() {
                       variant="outline"
                       onClick={() => handleResolve(report.id, false, report.type)}
                       disabled={resolvingId === report.id}
-                      className="gap-2"
+                      className="gap-2 w-full sm:w-auto"
                     >
                       {resolvingId === report.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

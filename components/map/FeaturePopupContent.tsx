@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FaHeart } from 'react-icons/fa'
-import { X, Pencil, Trash2, Camera } from 'lucide-react'
+import { X, Camera } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useFeatureModal } from './FeatureModalContext'
 import { FeatureType } from '@/types/database'
@@ -64,6 +64,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([])
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null)
   const { closeModal } = useFeatureModal()
 
   useEffect(() => {
@@ -511,34 +512,75 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     : null
 
   return (
-    <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
-      <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50 flex-shrink-0">
+    <>
+      {fullScreenImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          onClick={() => setFullScreenImage(null)}
+        >
+          <button
+            onClick={() => setFullScreenImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface flex items-center justify-center shadow-xl border border-m3-outline transition-all hover:scale-110 z-10"
+            aria-label="Close full screen image"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={fullScreenImage}
+            alt={feature.title}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+      <div className="w-full h-full flex flex-col sm:flex-col lg:flex-col bg-m3-surface rounded-lg border overflow-hidden sm:overflow-hidden overflow-y-auto relative">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex-shrink-0">
         {isFeatureOwner && !isEditingFeature ? (
           <EditDeleteControls
             onEdit={handleEditFeature}
             onDelete={handleDeleteFeature}
+            onClose={closeModal}
             isDeleting={isDeletingFeature}
+            showClose={true}
             size="md"
             editLabel="Edit feature"
             deleteLabel="Delete feature"
+            closeLabel="Close modal"
           />
         ) : !isEditingFeature && user ? (
           <EditDeleteControls
             onEdit={() => {}}
             onDelete={() => {}}
             onReport={handleReportFeature}
+            onClose={closeModal}
             isReporting={isReportingFeature}
             showEdit={false}
             showDelete={false}
             showReport={true}
+            showClose={true}
             size="md"
             reportLabel="Report feature"
+            closeLabel="Close modal"
           />
-        ) : null}
+        ) : (
+          <EditDeleteControls
+            onEdit={() => {}}
+            onDelete={() => {}}
+            onClose={closeModal}
+            showEdit={false}
+            showDelete={false}
+            showClose={true}
+            size="md"
+            closeLabel="Close modal"
+          />
+        )}
       </div>
-      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-1/2 min-h-0">
-        <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline">
+      <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-auto sm:h-auto lg:h-1/2 min-h-0 flex-shrink-0">
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-[200px] sm:min-h-[250px] lg:min-h-0 lg:h-full">
+          <div 
+            className="relative w-full h-full max-h-[300px] sm:max-h-[350px] lg:max-h-none flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => firstPhoto && setFullScreenImage(firstPhoto.full_url || firstPhoto.photo_url)}
+          >
             {firstPhoto ? (
               <FeaturePhoto
                 photoUrl={firstPhoto.full_url || firstPhoto.photo_url}
@@ -553,7 +595,10 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               </div>
             )}
             <button
-              onClick={handleLike}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleLike()
+              }}
               disabled={!user || isLiking || likeData.user_liked}
               className={`absolute top-3 left-3 md:top-4 md:left-4 w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-xl transition-all z-10 ${
                 likeData.user_liked
@@ -574,8 +619,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           </div>
         </div>
         
-        <div className="p-4 md:p-6 lg:p-8 lg:pl-4 flex flex-col min-w-0 min-h-0 overflow-y-auto">
-          <div className="space-y-3 md:space-y-4">
+        <div className="p-3 sm:p-4 md:p-6 lg:p-8 lg:pl-4 flex flex-col min-w-0 min-h-0 overflow-y-auto lg:overflow-y-auto">
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
             {isEditingFeature ? (
               <div className="space-y-3">
                 <Input
@@ -740,14 +785,14 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         </div>
       </header>
 
-      <main className="h-1/2 flex flex-col min-h-0 overflow-hidden bg-m3-surface">
-        <div className="px-4 md:px-6 lg:px-8 py-3 md:py-4 flex-shrink-0 bg-m3-surface">
+      <main className="h-auto sm:h-auto lg:h-1/2 flex flex-col min-h-0 overflow-hidden bg-m3-surface flex-shrink-0">
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 flex-shrink-0 bg-m3-surface">
           <h2 className="font-semibold text-sm md:text-base text-foreground">
             Comments <span className="text-muted-foreground font-normal">({comments.length})</span>
           </h2>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0 bg-m3-surface">
+        <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 min-h-0 bg-m3-surface">
           {isLoadingComments ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-sm text-muted-foreground">Loading comments...</p>
@@ -1006,5 +1051,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         </div>
       )}
     </div>
+    </>
   )
 }

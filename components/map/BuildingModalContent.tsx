@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Building, AccessibilityFeature } from '@/types/map'
 import { FeaturePhoto } from './FeaturePhoto'
-import { formatFeatureType } from '@/lib/utils/feature-utils'
 import { safeFetch } from '@/lib/fetch-utils'
 import type { ApiFeatureWithPhotos } from '@/types/database'
 import { transformApiFeatureToMapFeature } from '@/lib/utils/feature-transform'
@@ -12,10 +11,12 @@ import { useFeatureModal } from './FeatureModalContext'
 import { useBuildingModal } from './BuildingModalContext'
 import { useAdmin } from '@/lib/hooks/use-admin'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
+import { X } from 'lucide-react'
 
 interface BuildingModalContentProps {
   building: Building
@@ -32,6 +33,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
     name: building.name,
     description: building.description || '',
   })
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null)
   const { isAdmin } = useAdmin()
   const { openModal: openFeatureModal } = useFeatureModal()
   const { closeModal } = useBuildingModal()
@@ -151,26 +153,60 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
   }, [building.id, isDeleting, closeModal])
 
   return (
-    <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
-      {isAdmin && (
-        <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50">
-          <EditDeleteControls
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            isEditing={isEditing}
-            isSaving={isSaving}
-            isDeleting={isDeleting}
-            size="md"
-            editLabel="Edit building"
-            deleteLabel="Delete building"
+    <>
+      {fullScreenImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          onClick={() => setFullScreenImage(null)}
+        >
+          <button
+            onClick={() => setFullScreenImage(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface flex items-center justify-center shadow-xl border border-m3-outline transition-all hover:scale-110 z-10"
+            aria-label="Close full screen image"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={fullScreenImage}
+            alt={building.name}
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
+      <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex-shrink-0">
+        {isAdmin && !isEditing ? (
+          <EditDeleteControls
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onClose={closeModal}
+            isDeleting={isDeleting}
+            showClose={true}
+            size="md"
+            editLabel="Edit building"
+            deleteLabel="Delete building"
+            closeLabel="Close modal"
+          />
+        ) : (
+          <EditDeleteControls
+            onEdit={() => {}}
+            onDelete={() => {}}
+            onClose={closeModal}
+            showEdit={false}
+            showDelete={false}
+            showClose={true}
+            size="md"
+            closeLabel="Close modal"
+          />
+        )}
+      </div>
       <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-1/2 min-h-0">
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline">
+          <div 
+            className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => buildingPhoto && setFullScreenImage(buildingPhoto.full_url || buildingPhoto.photo_url)}
+          >
             {buildingPhoto ? (
               <FeaturePhoto
                 photoUrl={buildingPhoto.full_url || buildingPhoto.photo_url}
@@ -189,35 +225,52 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         
         <div className="p-4 md:p-6 lg:p-8 lg:pl-4 flex flex-col min-w-0 min-h-0 overflow-y-auto">
           <div className="space-y-3 md:space-y-4">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="building-name">Building Name *</Label>
-                  <Input
-                    id="building-name"
-                    value={editData.name}
-                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                    placeholder="e.g., Main Building"
-                    maxLength={200}
-                    className="mt-1"
-                    disabled={isSaving}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="building-description">Description</Label>
-                  <Textarea
-                    id="building-description"
-                    value={editData.description}
-                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                    placeholder="Optional description of the building"
-                    maxLength={1000}
-                    rows={4}
-                    className="mt-1"
-                    disabled={isSaving}
-                  />
-                </div>
-              </div>
-            ) : (
+             {isEditing ? (
+               <div className="space-y-3">
+                 <div>
+                   <Label htmlFor="building-name">Building Name *</Label>
+                   <Input
+                     id="building-name"
+                     value={editData.name}
+                     onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                     placeholder="e.g., Main Building"
+                     maxLength={200}
+                     className="mt-1"
+                     disabled={isSaving}
+                   />
+                 </div>
+                 <div>
+                   <Label htmlFor="building-description">Description</Label>
+                   <Textarea
+                     id="building-description"
+                     value={editData.description}
+                     onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                     placeholder="Optional description of the building"
+                     maxLength={1000}
+                     rows={4}
+                     className="mt-1"
+                     disabled={isSaving}
+                   />
+                 </div>
+                 
+                 <div className="flex gap-2">
+                   <Button
+                     onClick={handleSave}
+                     disabled={isSaving || !editData.name.trim()}
+                     className="flex-1"
+                   >
+                     {isSaving ? 'Saving...' : 'Save'}
+                   </Button>
+                   <Button
+                     variant="outline"
+                     onClick={handleCancel}
+                     disabled={isSaving}
+                   >
+                     Cancel
+                   </Button>
+                 </div>
+               </div>
+             ) : (
               <>
                 <div>
                   <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-m3-primary leading-tight">
@@ -310,6 +363,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         </div>
       </main>
     </div>
+    </>
   )
 }
 
