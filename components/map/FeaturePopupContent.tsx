@@ -19,6 +19,7 @@ import { FeatureType } from '@/types/database'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 import { getFeatureColor, hexToRgba } from '@/lib/utils/feature-colors'
+import { ReportModal } from '@/components/ui/report-modal'
 
 interface FeaturePopupContentProps {
   feature: AccessibilityFeature
@@ -59,6 +60,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [isDeletingComment, setIsDeletingComment] = useState(false)
   const [isReportingComment, setIsReportingComment] = useState(false)
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+  const [showReportCommentModal, setShowReportCommentModal] = useState(false)
+  const [showReportFeatureModal, setShowReportFeatureModal] = useState(false)
   const [isReportingFeature, setIsReportingFeature] = useState(false)
   const [newPhotos, setNewPhotos] = useState<File[]>([])
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
@@ -397,18 +400,22 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     }
   }, [feature.id, isDeletingComment, selectedComment])
 
-  const handleReportComment = useCallback(async (commentId: string) => {
-    if (isReportingComment || reportingCommentId) return
+  const handleReportCommentClick = useCallback((commentId: string) => {
+    setReportingCommentId(commentId)
+    setShowReportCommentModal(true)
+  }, [])
+
+  const handleReportComment = useCallback(async (reason: string) => {
+    if (!reportingCommentId || isReportingComment) return
 
     setIsReportingComment(true)
-    setReportingCommentId(commentId)
     try {
-      const response = await fetch(`/api/comments/${commentId}/report`, {
+      const response = await fetch(`/api/comments/${reportingCommentId}/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ reason: null }),
+        body: JSON.stringify({ reason }),
       })
 
       if (!response.ok) {
@@ -416,17 +423,22 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         throw new Error(errorData.error || 'Failed to report comment')
       }
 
+      setShowReportCommentModal(false)
+      setReportingCommentId(null)
       alert('Comment reported successfully. Thank you for your feedback.')
     } catch (error) {
       console.error('Error reporting comment:', error)
       alert(error instanceof Error ? error.message : 'Failed to report comment. Please try again.')
     } finally {
       setIsReportingComment(false)
-      setReportingCommentId(null)
     }
-  }, [isReportingComment, reportingCommentId])
+  }, [reportingCommentId, isReportingComment])
 
-  const handleReportFeature = useCallback(async () => {
+  const handleReportFeatureClick = useCallback(() => {
+    setShowReportFeatureModal(true)
+  }, [])
+
+  const handleReportFeature = useCallback(async (reason: string) => {
     if (isReportingFeature) return
 
     setIsReportingFeature(true)
@@ -436,7 +448,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ reason: null }),
+        body: JSON.stringify({ reason }),
       })
 
       if (!response.ok) {
@@ -444,6 +456,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         throw new Error(errorData.error || 'Failed to report feature')
       }
 
+      setShowReportFeatureModal(false)
       alert('Feature reported successfully. Thank you for your feedback.')
     } catch (error) {
       console.error('Error reporting feature:', error)
@@ -551,7 +564,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           <EditDeleteControls
             onEdit={() => {}}
             onDelete={() => {}}
-            onReport={handleReportFeature}
+            onReport={handleReportFeatureClick}
             onClose={closeModal}
             isReporting={isReportingFeature}
             showEdit={false}
@@ -824,7 +837,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                         <EditDeleteControls
                           onEdit={() => {}}
                           onDelete={() => {}}
-                          onReport={() => handleReportComment(comment.id)}
+                          onReport={() => handleReportCommentClick(comment.id)}
                           isReporting={isReportingComment && reportingCommentId === comment.id}
                           showEdit={false}
                           showDelete={false}
@@ -959,7 +972,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                   <EditDeleteControls
                     onEdit={() => {}}
                     onDelete={() => {}}
-                    onReport={() => handleReportComment(selectedComment.id)}
+                    onReport={() => handleReportCommentClick(selectedComment.id)}
                     isReporting={isReportingComment && reportingCommentId === selectedComment.id}
                     showEdit={false}
                     showDelete={false}
@@ -1050,6 +1063,25 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           </div>
         </div>
       )}
+
+      <ReportModal
+        isOpen={showReportCommentModal}
+        onClose={() => {
+          setShowReportCommentModal(false)
+          setReportingCommentId(null)
+        }}
+        onSubmit={handleReportComment}
+        title="Report Comment"
+        isSubmitting={isReportingComment}
+      />
+
+      <ReportModal
+        isOpen={showReportFeatureModal}
+        onClose={() => setShowReportFeatureModal(false)}
+        onSubmit={handleReportFeature}
+        title="Report Feature"
+        isSubmitting={isReportingFeature}
+      />
     </div>
     </>
   )
