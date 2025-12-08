@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 2% 100%;
+    --foreground: 240 2% 20%;
+    --card: 290 18% 92%;
+    --card-foreground: 290 18% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 2% 20%;
+    --primary: 225 62% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 10% 59%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 230 6% 96%;
+    --muted-foreground: 230 6% 40%;
+    --accent: 225 62% 95%;
+    --accent-foreground: 225 62% 20%;
+    --destructive: 4 100% 64%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 6% 80%;
+    --input: 230 6% 80%;
+    --ring: 225 62% 67%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    
+    --m3-primary: 225 62% 67%;
+    --m3-on-primary: 0 0% 100%;
+    --m3-primary-container: 225 62% 92%;
+    --m3-on-primary-container: 225 62% 25%;
+    --m3-primary-hover: 225 62% 63%;
+    --m3-primary-pressed: 225 62% 59%;
+    
+    --m3-secondary: 220 10% 59%;
+    --m3-on-secondary: 0 0% 100%;
+    --m3-secondary-container: 220 10% 92%;
+    --m3-on-secondary-container: 220 10% 25%;
+    --m3-secondary-hover: 220 10% 55%;
+    --m3-secondary-pressed: 220 10% 51%;
+    
+    --m3-tertiary: 290 18% 59%;
+    --m3-on-tertiary: 0 0% 100%;
+    --m3-tertiary-container: 290 18% 92%;
+    --m3-on-tertiary-container: 290 18% 25%;
+    --m3-tertiary-hover: 290 18% 55%;
+    --m3-tertiary-pressed: 290 18% 51%;
+    
+    --m3-error: 4 100% 64%;
+    --m3-on-error: 0 0% 100%;
+    --m3-error-container: 4 100% 95%;
+    --m3-on-error-container: 4 100% 25%;
+    --m3-error-hover: 4 100% 60%;
+    --m3-error-pressed: 4 100% 56%;
+    
+    --m3-surface: 240 2% 100%;
+    --m3-on-surface: 240 2% 20%;
+    --m3-surface-variant: 230 6% 96%;
+    --m3-on-surface-variant: 230 6% 40%;
+    --m3-surface-dim: 240 2% 87%;
+    --m3-surface-bright: 240 2% 100%;
+    
+    --m3-outline: 230 6% 50%;
+    --m3-outline-variant: 230 6% 80%;
+  }
+  .dark {
+    --background: 240 2% 10%;
+    --foreground: 240 2% 95%;
+    --card: 290 18% 30%;
+    --card-foreground: 290 18% 90%;
+    --popover: 240 2% 12%;
+    --popover-foreground: 240 2% 95%;
+    --primary: 225 62% 75%;
+    --primary-foreground: 225 62% 20%;
+    --secondary: 220 10% 65%;
+    --secondary-foreground: 220 10% 20%;
+    --muted: 230 6% 20%;
+    --muted-foreground: 230 6% 80%;
+    --accent: 225 62% 25%;
+    --accent-foreground: 225 62% 90%;
+    --destructive: 4 100% 70%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 6% 25%;
+    --input: 230 6% 25%;
+    --ring: 225 62% 75%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    --m3-primary: 225 62% 75%;
+    --m3-on-primary: 225 62% 20%;
+    --m3-primary-container: 225 62% 30%;
+    --m3-on-primary-container: 225 62% 90%;
+    --m3-primary-hover: 225 62% 79%;
+    --m3-primary-pressed: 225 62% 71%;
+    
+    --m3-secondary: 220 10% 65%;
+    --m3-on-secondary: 220 10% 20%;
+    --m3-secondary-container: 220 10% 30%;
+    --m3-on-secondary-container: 220 10% 90%;
+    --m3-secondary-hover: 220 10% 69%;
+    --m3-secondary-pressed: 220 10% 61%;
+    
+    --m3-tertiary: 290 18% 65%;
+    --m3-on-tertiary: 290 18% 20%;
+    --m3-tertiary-container: 290 18% 30%;
+    --m3-on-tertiary-container: 290 18% 90%;
+    --m3-tertiary-hover: 290 18% 69%;
+    --m3-tertiary-pressed: 290 18% 61%;
+    
+    --m3-error: 4 100% 70%;
+    --m3-on-error: 0 0% 100%;
+    --m3-error-container: 4 100% 30%;
+    --m3-on-error-container: 4 100% 90%;
+    --m3-error-hover: 4 100% 74%;
+    --m3-error-pressed: 4 100% 66%;
+    
+    --m3-surface: 240 2% 10%;
+    --m3-on-surface: 240 2% 95%;
+    --m3-surface-variant: 230 6% 20%;
+    --m3-on-surface-variant: 230 6% 80%;
+    --m3-surface-dim: 240 2% 7%;
+    --m3-surface-bright: 240 2% 15%;
+    
+    --m3-outline: 230 6% 60%;
+    --m3-outline-variant: 230 6% 30%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .feature-popup-custom {
+    @apply !border-0 !shadow-none !p-0 !bg-transparent;
+  }
+  
+  .feature-popup-custom .leaflet-popup-content-wrapper {
+    @apply !p-0 !rounded-lg !shadow-2xl !border !bg-transparent;
+  }
+  
+  .feature-popup-custom .leaflet-popup-content {
+    @apply !m-0;
+    width: 70vw !important;
+    max-width: 1400px !important;
+    height: 70vh !important;
+    max-height: 90vh !important;
+  }
+  
+  .feature-popup-custom .leaflet-popup-tip {
+    @apply !bg-background !border;
+  }
+
+  .feature-modal-backdrop {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  .feature-modal-content {
+    animation: expandFromMarker 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes expandFromMarker {
+    from {
+      transform: translate(var(--initial-x, 0), var(--initial-y, 0)) scale(0.05);
+      opacity: 0;
+    }
+    to {
+      transform: translate(0, 0) scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+.leaflet-container .leaflet-control-zoom {
+  border: 1px solid hsl(var(--m3-outline)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  background-color: hsl(var(--m3-tertiary-container)) !important;
+}
+
+.leaflet-container .leaflet-control-zoom a,
+.leaflet-container .leaflet-control-zoom-in,
+.leaflet-container .leaflet-control-zoom-out {
+  background-color: hsl(var(--m3-tertiary-container)) !important;
+  color: hsl(var(--m3-on-tertiary-container)) !important;
+  border-bottom: 1px solid hsl(var(--m3-outline)) !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  display: block !important;
+}
+
+.leaflet-container .leaflet-control-zoom a:last-child,
+.leaflet-container .leaflet-control-zoom-out {
+  border-bottom: none !important;
+}
+
+.leaflet-container .leaflet-control-zoom a:hover,
+.leaflet-container .leaflet-control-zoom-in:hover,
+.leaflet-container .leaflet-control-zoom-out:hover {
+  background-color: hsl(var(--m3-tertiary-hover) / 0.2) !important;
+  color: hsl(var(--m3-on-tertiary-container)) !important;
+}
+
+.leaflet-container .leaflet-control-zoom a:active,
+.leaflet-container .leaflet-control-zoom-in:active,
+.leaflet-container .leaflet-control-zoom-out:active {
+  background-color: hsl(var(--m3-tertiary-pressed) / 0.3) !important;
+}
+
+.leaflet-container .leaflet-control-zoom a.leaflet-disabled,
+.leaflet-container .leaflet-control-zoom-in.leaflet-disabled,
+.leaflet-container .leaflet-control-zoom-out.leaflet-disabled {
+  background-color: hsl(var(--m3-tertiary-container)) !important;
+  color: hsl(var(--m3-on-tertiary-container) / 0.4) !important;
+  cursor: not-allowed !important;
+  opacity: 0.4 !important;
+}
