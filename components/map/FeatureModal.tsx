@@ -16,6 +16,7 @@ export function FeatureModal() {
       onClose={closeModal}
       zIndex={Z_INDEX.FEATURE_MODAL}
       animationOrigin={animationOrigin}
+      hideCloseButton={true}
     >
       <FeaturePopupContent feature={selectedFeature} />
     </Modal>

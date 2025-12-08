@@ -10,6 +10,7 @@ interface EditDeleteControlsProps {
   onReport?: () => void
   onSave?: () => void
   onCancel?: () => void
+  onClose?: () => void
   isEditing?: boolean
   isSaving?: boolean
   isDeleting?: boolean
@@ -17,10 +18,12 @@ interface EditDeleteControlsProps {
   showEdit?: boolean
   showDelete?: boolean
   showReport?: boolean
+  showClose?: boolean
   className?: string
   editLabel?: string
   deleteLabel?: string
   reportLabel?: string
+  closeLabel?: string
   saveLabel?: string
   cancelLabel?: string
   size?: 'sm' | 'md' | 'lg'
@@ -32,6 +35,7 @@ export function EditDeleteControls({
   onReport,
   onSave,
   onCancel,
+  onClose,
   isEditing = false,
   isSaving = false,
   isDeleting = false,
@@ -39,10 +43,12 @@ export function EditDeleteControls({
   showEdit = true,
   showDelete = true,
   showReport = false,
+  showClose = false,
   className = '',
   editLabel = 'Edit',
   deleteLabel = 'Delete',
   reportLabel = 'Report',
+  closeLabel = 'Close',
   saveLabel = 'Save',
   cancelLabel = 'Cancel',
   size = 'md',
@@ -88,13 +94,13 @@ export function EditDeleteControls({
 
   if (isEditing && onSave && onCancel) {
     return (
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-1.5 md:gap-2 flex-wrap ${className}`}>
         <Button
           size="icon"
           variant="ghost"
           onClick={onSave}
           disabled={isSaving}
-          className={`${sizes.button} rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-primary shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+          className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-primary shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={saveLabel}
         >
           {isSaving ? <Loader2 className={`${sizes.icon} animate-spin`} /> : <Check className={sizes.icon} />}
@@ -104,7 +110,7 @@ export function EditDeleteControls({
           variant="ghost"
           onClick={handleCancel}
           disabled={isSaving}
-          className={`${sizes.button} rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+          className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={cancelLabel}
         >
           <X className={sizes.icon} />
@@ -174,6 +180,18 @@ export function EditDeleteControls({
             <Trash2 className={sizes.icon} />
           </Button>
         )
+      )}
+      {showClose && onClose && (
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onClose}
+          disabled={isDeleting || isReporting || isEditing}
+          className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-surface hover:bg-m3-surface/90 text-m3-on-surface shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+          aria-label={closeLabel}
+        >
+          <X className={sizes.icon} />
+        </Button>
       )}
     </div>
   )

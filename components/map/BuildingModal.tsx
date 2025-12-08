@@ -16,6 +16,7 @@ export function BuildingModal() {
       onClose={closeModal}
       zIndex={Z_INDEX.BUILDING_MODAL}
       animationOrigin={animationOrigin}
+      hideCloseButton={true}
     >
       <BuildingModalContent building={selectedBuilding} />
     </Modal>

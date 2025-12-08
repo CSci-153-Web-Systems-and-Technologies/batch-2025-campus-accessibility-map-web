@@ -31,7 +31,7 @@ export function DashboardShell({
   return (
     <div className="flex h-screen bg-m3-surface">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-6 sm:ml-16">
         {children}
       </main>
     </div>

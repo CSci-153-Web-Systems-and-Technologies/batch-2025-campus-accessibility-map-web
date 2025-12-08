@@ -31,7 +31,7 @@ function MapLayoutContent({
   return (
     <div className="flex h-screen bg-m3-surface">
       <Sidebar />
-      <main className="flex-1 relative">
+      <main className="flex-1 relative sm:ml-16">
         <div className="absolute inset-0 z-0">
           <CampusMapWrapper />
           {!hasOverlay && (

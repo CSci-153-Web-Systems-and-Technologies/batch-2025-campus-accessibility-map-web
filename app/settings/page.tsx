@@ -177,17 +177,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-m3-primary mb-8">Settings</h1>
+    <div className="bg-m3-surface text-m3-on-surface p-3 sm:p-4 md:p-6 rounded-lg shadow max-w-4xl mx-auto">
+      <h1 className="text-2xl sm:text-3xl font-bold text-m3-primary mb-6 sm:mb-8">Settings</h1>
 
       <div className="space-y-8">
         <div>
           <h2 className="text-xl font-semibold mb-4 text-m3-primary">Profile Settings</h2>
           <div className="space-y-6">
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
               <div className="relative">
                 <div 
-                  className="w-20 h-20 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-m3-outline"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-m3-surface-variant flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-m3-outline"
                   onClick={handleAvatarClick}
                 >
                   {avatarUrl ? (
