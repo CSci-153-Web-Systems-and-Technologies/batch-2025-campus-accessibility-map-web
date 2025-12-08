@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CookieConsentTooltip } from "@/components/CookieConsentModal";
+import { PrivacyPolicyModal } from "@/components/ui/privacy-policy-modal";
 
 export function AuthForm({
   className,
@@ -30,6 +31,7 @@ export function AuthForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -206,9 +208,23 @@ export function AuthForm({
                 </>
               )}
             </div>
+            <div className="mt-3 text-center text-xs text-muted-foreground">
+              By signing up, you agree to our{" "}
+              <button
+                type="button"
+                onClick={() => setShowPrivacyModal(true)}
+                className="underline underline-offset-4 hover:no-underline"
+              >
+                Privacy Policy
+              </button>
+            </div>
           </form>
         </CardContent>
       </Card>
+      <PrivacyPolicyModal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+      />
     </div>
   );
 }

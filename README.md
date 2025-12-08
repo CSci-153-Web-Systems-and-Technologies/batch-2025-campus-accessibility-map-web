@@ -1,109 +1,407 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Campus Accessibility Map
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+A modern, interactive web application for mapping and managing accessibility features across a university campus. Built with Next.js, Supabase, and Leaflet, this platform enables students, faculty, and administrators to discover, contribute, and manage accessibility information in real-time.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## ✨ Features
 
-## Features
+### Core Functionality
+- **Interactive Campus Map**: Explore accessibility features on an interactive Leaflet map with OpenStreetMap tiles
+- **Accessibility Feature Management**: Create, view, edit, and delete accessibility markers (ramps, elevators, restrooms, parking, benches)
+- **Building Management**: Add and manage campus buildings with polygon outlines
+- **Photo Uploads**: Upload and manage multiple photos for each accessibility feature
+- **Comments System**: Add comments to features for additional context and updates
+- **Like System**: Like features to help others identify useful accessibility resources
+- **Building Search**: Quick search functionality to find and navigate to specific buildings
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### User Features
+- **User Profiles**: View your contributions (features and comments) on your profile page
+- **Profile Customization**: Upload avatar, set display name, and manage account settings
+- **Theme Customization**: Choose from 3 color themes with dark mode and contrast level controls
+- **Responsive Design**: Fully responsive interface optimized for desktop, tablet, and mobile devices
 
-## Demo
+### Moderation & Reporting
+- **Content Reporting**: Report inappropriate comments or features with required reason
+- **Admin Moderation**: Dedicated moderation dashboard for administrators
+- **Report Management**: View, resolve, and delete reported content
+- **Soft Deletion**: Content is soft-deleted, allowing admins to review before permanent removal
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### Advanced Features
+- **Real-time Updates**: Live updates when features, comments, or buildings are added
+- **Filter System**: Filter map markers by feature type (ramp, elevator, accessible restroom, parking, restroom, bench)
+- **Full-screen Image Viewing**: Click any photo to view it in full-screen mode
+- **Mobile-optimized**: Hamburger menu, compact controls, and touch-friendly interface for mobile devices
+- **Accessibility First**: Built with accessibility in mind, following Material Design 3 principles
 
-## Deploy to Vercel
+## 🚀 Tech Stack
 
-Vercel deployment will guide you through creating a Supabase account and project.
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Row Level Security)
+- **Map Library**: Leaflet with React-Leaflet
+- **Styling**: Tailwind CSS with Material Design 3 (M3) color system
+- **UI Components**: shadcn/ui components with custom M3 styling
+- **Icons**: Lucide React, React Icons
+- **State Management**: React Context API and hooks
+- **Authentication**: Supabase Auth with email/password
+- **File Storage**: Supabase Storage for photos and avatars
+- **Deployment**: Vercel-ready
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 📋 Prerequisites
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+Before you begin, ensure you have:
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+- Node.js 18+ installed
+- A Supabase account and project
+- Git installed on your machine
+- npm, yarn, or pnpm package manager
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## 🛠️ Installation
 
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
+1. **Clone the repository**
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   git clone <repository-url>
+   cd batch-2025-campus-accessibility-map-web
    ```
 
+2. **Install dependencies**
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
    ```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
+3. **Environment Setup**
+   
+   Create a `.env.local` file in the root directory with the following variables:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-3. Use `cd` to change into the app's directory
+   You can find these values in your [Supabase project's API settings](https://supabase.com/dashboard/project/_/settings/api).
+
+4. **Supabase Database Setup**
+   
+   The project includes migration files in the `supabase/migrations/` directory. Run these migrations in order:
 
    ```bash
-   cd with-supabase-app
+   # Using Supabase CLI (recommended)
+   supabase migration up
+   
+   # Or manually run each migration file in your Supabase SQL editor
    ```
 
-4. Rename `.env.example` to `.env.local` and update the following:
+   **Key Database Tables:**
+   - `buildings` - Campus building information with polygon coordinates
+   - `accessibility_features` - Accessibility markers (ramps, elevators, etc.)
+   - `feature_photos` - Photos associated with accessibility features
+   - `feature_comments` - User comments on features
+   - `feature_likes` - User likes on features
+   - `user_profiles` - User profile information
+   - `comment_reports` - Reports on comments
+   - `feature_reports` - Reports on features
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+5. **Storage Buckets Setup**
+   
+   Create the following storage buckets in Supabase:
+   - `feature-photos` - For accessibility feature photos
+   - `avatars` - For user profile pictures
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+   Set appropriate RLS policies for public read access and authenticated write access.
 
-5. You can now run the Next.js local development server:
+6. **Admin User Setup**
+   
+   To create an admin user, run the SQL script in `supabase/migrations/20251202143600_create_admin_user.sql` or manually set a user's role to 'admin' in the `auth.users` table metadata:
+   
+   ```sql
+   UPDATE auth.users
+   SET raw_user_meta_data = jsonb_set(
+     COALESCE(raw_user_meta_data, '{}'::jsonb),
+     '{role}',
+     '"admin"'
+   )
+   WHERE id = 'your-user-id';
+   ```
 
+## 🏃‍♂️ Running the Application
+
+1. **Start the development server**
    ```bash
    npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
    ```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+2. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+3. **Create an account**
+   - Sign up with email and password
+   - Complete your profile setup
+   - Start exploring and contributing!
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+## 📖 Usage
 
-## Feedback and issues
+### For All Users:
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+1. **Explore the Map**
+   - View accessibility features as colored markers on the map
+   - Click markers to see feature details
+   - Use the filter drawer to show/hide specific feature types
+   - Search for buildings using the search button
 
-## More Supabase examples
+2. **View Features**
+   - Click any marker to open the feature modal
+   - View photos, description, location, and comments
+   - Like features you find helpful
+   - Click photos to view them in full-screen
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+3. **Add Features**
+   - Click the "Add Marker" button
+   - Click on the map to place a feature
+   - Fill in the form (title, type, description, photos)
+   - Submit to add the feature
+
+4. **Add Comments**
+   - Open a feature modal
+   - Scroll to the comments section
+   - Type your comment and submit
+
+5. **Report Content**
+   - Click the report button (flag icon) on comments or features
+   - Provide a reason for reporting
+   - Submit the report for admin review
+
+### For Administrators:
+
+1. **Access Moderation Dashboard**
+   - Navigate to "Moderation" from the sidebar
+   - View all reported content (comments and features)
+   - Filter by resolved/unresolved status
+
+2. **Moderate Reports**
+   - Review reported content and reasons
+   - Resolve reports that don't require action
+   - Delete inappropriate content
+   - View deleted content status
+
+3. **Manage Buildings**
+   - Click "Add Building" button
+   - Click on map to set building location
+   - Draw polygon outline or fetch from OpenStreetMap
+   - Add building name and description
+
+## 📁 Project Structure
+
+```
+batch-2025-campus-accessibility-map-web/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                   # Authentication routes
+│   │   ├── login/               # Login page
+│   │   ├── forgot-password/     # Password recovery
+│   │   └── update-password/     # Password update
+│   ├── api/                     # API routes
+│   │   ├── buildings/           # Building CRUD endpoints
+│   │   ├── features/            # Feature CRUD endpoints
+│   │   ├── profile/             # User profile endpoints
+│   │   └── moderation/          # Moderation endpoints
+│   ├── moderation/              # Admin moderation page
+│   ├── profile/                 # User profile page
+│   ├── settings/                # User settings page
+│   └── page.tsx                 # Main map page
+├── components/                   # React components
+│   ├── map/                     # Map-related components
+│   │   ├── CampusMap.tsx        # Main map component
+│   │   ├── FeaturePopupContent.tsx  # Feature modal content
+│   │   ├── BuildingModalContent.tsx # Building modal content
+│   │   ├── FiltersDrawer.tsx    # Feature type filters
+│   │   └── ...                  # Other map components
+│   ├── ui/                      # Reusable UI components
+│   │   ├── button.tsx           # Button component
+│   │   ├── modal.tsx            # Modal component
+│   │   ├── report-modal.tsx     # Report modal
+│   │   └── ...                  # Other UI components
+│   ├── sidebar.tsx              # Navigation sidebar
+│   └── theme-selector.tsx       # Theme customization
+├── lib/                         # Utility functions
+│   ├── hooks/                   # Custom React hooks
+│   │   ├── use-theme.ts         # Theme management
+│   │   └── use-admin.ts         # Admin check hook
+│   ├── utils/                   # Utility functions
+│   │   ├── theme.ts             # Theme generation
+│   │   ├── feature-colors.ts    # Feature type colors
+│   │   └── ...                  # Other utilities
+│   └── supabase/                # Supabase configuration
+├── supabase/
+│   └── migrations/              # Database migrations
+├── types/                       # TypeScript definitions
+│   ├── database.ts              # Database types
+│   └── map.ts                   # Map-related types
+└── public/                      # Static assets
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous key | Yes |
+
+### Map Configuration
+
+The map is configured for VSU (Visayas State University) campus by default. To customize for your campus, edit `types/map.ts`:
+
+```typescript
+export const VSU_CAMPUS_CONFIG: CampusMapConfig = {
+  center: [latitude, longitude],  // Your campus center
+  zoom: 17,
+  minZoom: 17,
+  maxZoom: 18,
+  bounds: [[south, west], [north, east]],
+  maxBounds: [[south, west], [north, east]],
+  maxBoundsViscosity: 1.0,
+}
+```
+
+### Feature Types
+
+The application supports the following accessibility feature types:
+- **Ramp** - Wheelchair ramps
+- **Elevator** - Elevators
+- **Accessible Restroom** - Accessible restroom facilities
+- **Parking** - Accessible parking spaces
+- **Restroom** - General restroom facilities
+- **Bench** - Seating benches
+
+## 🎨 Theming
+
+The application uses Material Design 3 (M3) color system with:
+- **3 Color Themes**: Default, Theme 2, and Theme 3
+- **Dark Mode**: Toggle between light and dark themes
+- **Contrast Levels**: Low, Medium, and High contrast options
+- **Persistent Preferences**: Theme settings saved to localStorage
+
+## 🔒 Security
+
+- **Row Level Security (RLS)**: All database tables have RLS policies enabled
+- **Authentication Required**: Most features require user authentication
+- **Admin-only Features**: Moderation and building creation restricted to admins
+- **Input Validation**: All API endpoints validate input data
+- **Soft Deletion**: Content is soft-deleted, preserving data integrity
+
+## 📱 Mobile Support
+
+- **Responsive Design**: Fully responsive across all screen sizes
+- **Mobile Menu**: Hamburger menu for navigation on mobile
+- **Touch-friendly**: Large touch targets and optimized interactions
+- **Mobile Map**: Optimized map bounds and controls for mobile devices
+- **Compact UI**: Streamlined interface for smaller screens
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. **Push your code to GitHub**
+   ```bash
+   git push origin main
+   ```
+
+2. **Connect to Vercel**
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "New Project"
+   - Import your GitHub repository
+
+3. **Configure Environment Variables**
+   - Add `NEXT_PUBLIC_SUPABASE_URL`
+   - Add `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+4. **Deploy**
+   - Click "Deploy"
+   - Wait for build to complete
+   - Your app will be live!
+
+### Database Migrations
+
+After deployment, ensure all migrations are run on your production Supabase database:
+
+```bash
+# Using Supabase CLI
+supabase db push
+
+# Or manually run migrations in Supabase SQL editor
+```
+
+## 🧪 Development
+
+### Available Scripts
+
+```bash
+# Development server
+npm run dev
+
+# Production build
+npm run build
+
+# Start production server
+npm start
+
+# Lint code
+npm run lint
+```
+
+### Code Quality
+
+- **TypeScript**: Strict mode enabled for type safety
+- **ESLint**: Configured with Next.js recommended rules
+- **Code Style**: Consistent formatting and naming conventions
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Test thoroughly
+5. Commit your changes: `git commit -m 'Add some feature'`
+6. Push to the branch: `git push origin feature-name`
+7. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Next.js](https://nextjs.org/) for the React framework
+- [Supabase](https://supabase.com/) for the backend infrastructure
+- [Leaflet](https://leafletjs.com/) for the mapping library
+- [OpenStreetMap](https://www.openstreetmap.org/) for map tiles
+- [shadcn/ui](https://ui.shadcn.com/) for UI components
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [Material Design 3](https://m3.material.io/) for design system inspiration
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+- Check existing [GitHub Issues](https://github.com/your-repo/issues)
+- Create a new issue with detailed information
+- Contact the development team
+
+## 🔮 Future Enhancements
+
+Potential features for future development:
+- Real-time collaboration features
+- Advanced analytics and reporting
+- Export functionality for accessibility reports
+- Integration with campus navigation systems
+- Mobile app version
+- Accessibility audit tools
+- Multi-language support
+
+---
+
+Made with ❤️ for accessible campus communities.
