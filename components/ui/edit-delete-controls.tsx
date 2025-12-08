@@ -1,22 +1,26 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, Check, X, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Check, X, Loader2, Flag } from 'lucide-react'
 import { useState } from 'react'
 
 interface EditDeleteControlsProps {
   onEdit: () => void
   onDelete: () => void
+  onReport?: () => void
   onSave?: () => void
   onCancel?: () => void
   isEditing?: boolean
   isSaving?: boolean
   isDeleting?: boolean
+  isReporting?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showReport?: boolean
   className?: string
   editLabel?: string
   deleteLabel?: string
+  reportLabel?: string
   saveLabel?: string
   cancelLabel?: string
   size?: 'sm' | 'md' | 'lg'
@@ -25,16 +29,20 @@ interface EditDeleteControlsProps {
 export function EditDeleteControls({
   onEdit,
   onDelete,
+  onReport,
   onSave,
   onCancel,
   isEditing = false,
   isSaving = false,
   isDeleting = false,
+  isReporting = false,
   showEdit = true,
   showDelete = true,
+  showReport = false,
   className = '',
   editLabel = 'Edit',
   deleteLabel = 'Delete',
+  reportLabel = 'Report',
   saveLabel = 'Save',
   cancelLabel = 'Cancel',
   size = 'md',
@@ -106,28 +114,40 @@ export function EditDeleteControls({
   }
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center gap-1.5 md:gap-2 flex-wrap ${className}`}>
       {showEdit && (
         <Button
           size="icon"
           variant="ghost"
           onClick={onEdit}
-          disabled={isDeleting}
-          className={`${sizes.button} rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-on-secondary-container shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+          disabled={isDeleting || isReporting}
+          className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-on-secondary-container shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
           aria-label={editLabel}
         >
           <Pencil className={sizes.icon} />
         </Button>
       )}
+      {showReport && onReport && (
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onReport}
+          disabled={isDeleting || isReporting || isEditing}
+          className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-error shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+          aria-label={reportLabel}
+        >
+          {isReporting ? <Loader2 className={`${sizes.icon} animate-spin`} /> : <Flag className={sizes.icon} />}
+        </Button>
+      )}
       {showDelete && (
         confirmDelete ? (
-          <div className={`flex items-center gap-2 bg-m3-surface rounded-lg px-2 py-1.5 md:px-2 md:py-1 border border-m3-outline shadow-xl`}>
+          <div className={`flex items-center gap-1.5 md:gap-2 flex-shrink-0 bg-m3-surface rounded-lg px-2 py-1.5 md:px-2 md:py-1 border border-m3-outline shadow-xl`}>
             <span className={`${sizes.text} text-m3-error`}>Delete?</span>
             <Button
               size="sm"
               variant="destructive"
               onClick={handleDelete}
-              disabled={isDeleting}
+              disabled={isDeleting || isReporting}
               className={`${sizes.confirmButton} touch-manipulation`}
             >
               {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Yes'}
@@ -136,7 +156,7 @@ export function EditDeleteControls({
               size="sm"
               variant="outline"
               onClick={() => setConfirmDelete(false)}
-              disabled={isDeleting}
+              disabled={isDeleting || isReporting}
               className={`${sizes.confirmButton} touch-manipulation`}
             >
               Cancel
@@ -147,8 +167,8 @@ export function EditDeleteControls({
             size="icon"
             variant="ghost"
             onClick={() => setConfirmDelete(true)}
-            disabled={isDeleting}
-            className={`${sizes.button} rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-error hover:text-m3-error shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
+            disabled={isDeleting || isReporting}
+            className={`${sizes.button} flex-shrink-0 rounded-full bg-m3-secondary-container hover:bg-m3-secondary-hover/20 text-m3-error hover:text-m3-error shadow-xl border border-m3-outline transition-all hover:scale-110 touch-manipulation`}
             aria-label={deleteLabel}
           >
             <Trash2 className={sizes.icon} />

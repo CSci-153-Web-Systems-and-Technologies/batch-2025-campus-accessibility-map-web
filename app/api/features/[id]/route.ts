@@ -180,7 +180,7 @@ export async function DELETE(
 
     const existingFeature = await supabase
       .from('accessibility_features')
-      .select('id')
+      .select('id, created_by')
       .eq('id', id)
       .is('deleted_at', null)
       .single()
@@ -192,16 +192,37 @@ export async function DELETE(
       )
     }
 
-    const { error } = await supabase
+    const isAdmin = user.user_metadata?.role === 'admin'
+    const isCreator = existingFeature.data.created_by === user.id
+
+    if (!isAdmin && !isCreator) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only the creator or an admin can delete this feature' },
+        { status: 403 }
+      )
+    }
+
+    const { data: updateData, error } = await supabase
       .from('accessibility_features')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
+      .select('id, deleted_at')
 
     if (error) {
       console.error('Error deleting feature:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       return NextResponse.json(
-        { error: 'Failed to delete feature', details: error.message },
-        { status: 400 }
+        { error: 'Failed to delete feature', details: error.message, code: error.code },
+        { status: 500 }
+      )
+    }
+
+    // Verify the update actually happened
+    if (!updateData || updateData.length === 0) {
+      console.error('Update returned no rows - RLS policy may have blocked the update')
+      return NextResponse.json(
+        { error: 'Update failed: No rows were updated. This may be due to RLS policies.' },
+        { status: 403 }
       )
     }
 

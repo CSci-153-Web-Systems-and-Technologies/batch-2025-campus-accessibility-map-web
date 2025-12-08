@@ -57,6 +57,9 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [isSavingComment, setIsSavingComment] = useState(false)
   const [isDeletingFeature, setIsDeletingFeature] = useState(false)
   const [isDeletingComment, setIsDeletingComment] = useState(false)
+  const [isReportingComment, setIsReportingComment] = useState(false)
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+  const [isReportingFeature, setIsReportingFeature] = useState(false)
   const [newPhotos, setNewPhotos] = useState<File[]>([])
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([])
@@ -393,6 +396,62 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     }
   }, [feature.id, isDeletingComment, selectedComment])
 
+  const handleReportComment = useCallback(async (commentId: string) => {
+    if (isReportingComment || reportingCommentId) return
+
+    setIsReportingComment(true)
+    setReportingCommentId(commentId)
+    try {
+      const response = await fetch(`/api/comments/${commentId}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: null }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to report comment')
+      }
+
+      alert('Comment reported successfully. Thank you for your feedback.')
+    } catch (error) {
+      console.error('Error reporting comment:', error)
+      alert(error instanceof Error ? error.message : 'Failed to report comment. Please try again.')
+    } finally {
+      setIsReportingComment(false)
+      setReportingCommentId(null)
+    }
+  }, [isReportingComment, reportingCommentId])
+
+  const handleReportFeature = useCallback(async () => {
+    if (isReportingFeature) return
+
+    setIsReportingFeature(true)
+    try {
+      const response = await fetch(`/api/features/${feature.id}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: null }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to report feature')
+      }
+
+      alert('Feature reported successfully. Thank you for your feedback.')
+    } catch (error) {
+      console.error('Error reporting feature:', error)
+      alert(error instanceof Error ? error.message : 'Failed to report feature. Please try again.')
+    } finally {
+      setIsReportingFeature(false)
+    }
+  }, [feature.id, isReportingFeature])
+
   const handleSubmitComment = useCallback(async () => {
     if (!user || !commentText.trim() || isSubmittingComment) return
 
@@ -453,8 +512,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
   return (
     <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
-      {isFeatureOwner && !isEditingFeature && (
-        <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50">
+      <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50 flex-shrink-0">
+        {isFeatureOwner && !isEditingFeature ? (
           <EditDeleteControls
             onEdit={handleEditFeature}
             onDelete={handleDeleteFeature}
@@ -463,8 +522,20 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             editLabel="Edit feature"
             deleteLabel="Delete feature"
           />
-        </div>
-      )}
+        ) : !isEditingFeature && user ? (
+          <EditDeleteControls
+            onEdit={() => {}}
+            onDelete={() => {}}
+            onReport={handleReportFeature}
+            isReporting={isReportingFeature}
+            showEdit={false}
+            showDelete={false}
+            showReport={true}
+            size="md"
+            reportLabel="Report feature"
+          />
+        ) : null}
+      </div>
       <header className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-m3-surface h-1/2 min-h-0">
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
           <div className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline">
@@ -696,13 +767,30 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                   ? comment.content.substring(0, 100) + '...' 
                   : comment.content
 
+                const isCommentOwner = user?.id && comment.user_id && comment.user_id === user.id
+
                 return (
                   <article
                     key={comment.id}
                     className="p-4 md:p-5 border rounded-xl hover:bg-m3-surface-variant/50 transition-all bg-m3-secondary-container shadow-sm hover:shadow-md flex flex-col min-h-[112px] md:min-h-[128px] relative"
                   >
+                    {!isCommentOwner && user && (
+                      <div className="absolute top-2 right-2 z-10 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <EditDeleteControls
+                          onEdit={() => {}}
+                          onDelete={() => {}}
+                          onReport={() => handleReportComment(comment.id)}
+                          isReporting={isReportingComment && reportingCommentId === comment.id}
+                          showEdit={false}
+                          showDelete={false}
+                          showReport={true}
+                          size="sm"
+                          reportLabel="Report comment"
+                        />
+                      </div>
+                    )}
                     <div 
-                      className="flex-1 min-w-0 mb-4 cursor-pointer"
+                      className={`flex-1 min-w-0 mb-4 cursor-pointer ${!isCommentOwner && user ? 'pr-10 md:pr-12' : ''}`}
                       onClick={() => setSelectedComment(comment)}
                     >
                       <p className="text-sm md:text-base text-foreground leading-relaxed line-clamp-2 break-words">
@@ -806,26 +894,37 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             >
               <X className="w-5 h-5 md:w-5 md:h-5" />
             </button>
-            {selectedComment && user?.id && selectedComment.user_id && selectedComment.user_id === user.id && (
-              <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50 flex items-center gap-2">
-                {editingCommentId === selectedComment.id ? null : (
-                  <>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <EditDeleteControls
-                        onEdit={() => handleEditComment(selectedComment)}
-                        onDelete={() => handleDeleteComment(selectedComment.id)}
-                        isEditing={editingCommentId === selectedComment.id}
-                        isDeleting={isDeletingComment}
-                        showEdit={editingCommentId !== selectedComment.id}
-                        size="md"
-                        editLabel="Edit comment"
-                        deleteLabel="Delete comment"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            <div className="absolute top-2 right-12 md:top-4 md:right-16 z-50 flex items-center gap-2 flex-shrink-0">
+              {selectedComment && user?.id && selectedComment.user_id && selectedComment.user_id === user.id && editingCommentId !== selectedComment.id && (
+                <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+                  <EditDeleteControls
+                    onEdit={() => handleEditComment(selectedComment)}
+                    onDelete={() => handleDeleteComment(selectedComment.id)}
+                    isEditing={editingCommentId === selectedComment.id}
+                    isDeleting={isDeletingComment}
+                    showEdit={editingCommentId !== selectedComment.id}
+                    size="md"
+                    editLabel="Edit comment"
+                    deleteLabel="Delete comment"
+                  />
+                </div>
+              )}
+              {selectedComment && user?.id && selectedComment.user_id && selectedComment.user_id !== user.id && (
+                <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
+                  <EditDeleteControls
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    onReport={() => handleReportComment(selectedComment.id)}
+                    isReporting={isReportingComment && reportingCommentId === selectedComment.id}
+                    showEdit={false}
+                    showDelete={false}
+                    showReport={true}
+                    size="md"
+                    reportLabel="Report comment"
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <article className="space-y-4">
                 <div className="flex items-start gap-3 md:gap-4">
