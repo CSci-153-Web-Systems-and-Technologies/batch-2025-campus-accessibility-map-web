@@ -20,6 +20,8 @@ export default function SettingsPage() {
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deletePasswordError, setDeletePasswordError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -137,21 +139,51 @@ export default function SettingsPage() {
   const handleDeleteAccount = async () => {
     if (!showDeleteConfirm) {
       setShowDeleteConfirm(true)
+      setDeletePassword('')
+      setDeletePasswordError(null)
+      return
+    }
+
+    if (!deletePassword.trim()) {
+      setDeletePasswordError('Password is required')
       return
     }
 
     setIsDeleting(true)
+    setDeletePasswordError(null)
     try {
-      const response = await fetch('/api/profile/delete', {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to delete account')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        setDeletePasswordError('No active session')
+        setIsDeleting(false)
+        return
       }
 
-      const supabase = createClient()
+      // Call the Edge Function directly
+      const { data, error } = await supabase.functions.invoke('delete_account', {
+        body: { password: deletePassword },
+      })
+
+      if (error) {
+        if (error.message?.includes('Invalid password') || error.message?.includes('401')) {
+          setDeletePasswordError('Incorrect password. Please try again.')
+          setIsDeleting(false)
+          return
+        }
+        throw new Error(error.message || 'Failed to delete account')
+      }
+
+      if (data?.error) {
+        if (data.error === 'Invalid password') {
+          setDeletePasswordError('Incorrect password. Please try again.')
+          setIsDeleting(false)
+          return
+        }
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
       await supabase.auth.signOut()
       // Clear remember_me cookie on logout
       document.cookie = `remember_me=; path=/; max-age=0`
@@ -159,7 +191,6 @@ export default function SettingsPage() {
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to delete account')
       setIsDeleting(false)
-      setShowDeleteConfirm(false)
     }
   }
 
@@ -295,23 +326,54 @@ export default function SettingsPage() {
                       <p className="text-sm font-medium text-m3-on-error-container mb-3">
                         Are you sure you want to delete your account? This action is permanent.
                       </p>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleDeleteAccount}
-                          disabled={isDeleting}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          {isDeleting ? 'Deleting...' : 'Yes, Delete Account'}
-                        </Button>
-                        <Button
-                          onClick={() => setShowDeleteConfirm(false)}
-                          variant="outline"
-                          size="sm"
-                          disabled={isDeleting}
-                        >
-                          Cancel
-                        </Button>
+                      <div className="space-y-3">
+                        <div>
+                          <label htmlFor="delete-password" className="block text-sm font-medium mb-2 text-m3-on-error-container">
+                            Enter your password to confirm
+                          </label>
+                          <Input
+                            id="delete-password"
+                            type="password"
+                            value={deletePassword}
+                            onChange={(e) => {
+                              setDeletePassword(e.target.value)
+                              setDeletePasswordError(null)
+                            }}
+                            placeholder="Your password"
+                            disabled={isDeleting}
+                            className="bg-m3-surface text-m3-on-surface border-m3-outline"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && deletePassword.trim() && !isDeleting) {
+                                handleDeleteAccount()
+                              }
+                            }}
+                          />
+                          {deletePasswordError && (
+                            <p className="text-sm text-m3-error mt-1">{deletePasswordError}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting || !deletePassword.trim()}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            {isDeleting ? 'Deleting...' : 'Yes, Delete Account'}
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setShowDeleteConfirm(false)
+                              setDeletePassword('')
+                              setDeletePasswordError(null)
+                            }}
+                            variant="outline"
+                            size="sm"
+                            disabled={isDeleting}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
