@@ -247,8 +247,13 @@ export default function ModerationPage() {
                         {new Date(report.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    {report.reason && (
-                      <p className="text-sm text-m3-on-surface-variant italic">"{report.reason}"</p>
+                    {report.reason ? (
+                      <div className="mt-2 p-2 bg-m3-surface-variant rounded border border-m3-outline">
+                        <p className="text-xs font-medium text-m3-on-surface-variant mb-1">Reason:</p>
+                        <p className="text-sm text-m3-on-surface">"{report.reason}"</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-m3-on-surface-variant italic mt-2">No reason provided</p>
                     )}
                   </div>
 

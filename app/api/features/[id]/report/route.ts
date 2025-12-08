@@ -40,7 +40,21 @@ export async function POST(
     }
 
     const body = await request.json()
-    const reason = body.reason?.trim() || null
+    const reason = body.reason?.trim()
+
+    if (!reason || reason.length === 0) {
+      return NextResponse.json(
+        { error: 'Reason is required' },
+        { status: 400 }
+      )
+    }
+
+    if (reason.length > 500) {
+      return NextResponse.json(
+        { error: 'Reason must be 500 characters or less' },
+        { status: 400 }
+      )
+    }
 
     const { data, error } = await supabase
       .from('feature_reports')

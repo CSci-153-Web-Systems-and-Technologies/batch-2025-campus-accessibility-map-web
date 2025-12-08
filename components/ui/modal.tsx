@@ -73,6 +73,7 @@ export function Modal({ isOpen, onClose, children, zIndex = 3000, animationOrigi
       <div 
         className="relative w-full sm:w-[90vw] md:w-[68vw] lg:w-[56vw] h-[95vh] sm:h-[90vh] md:h-[85vh] max-w-[1120px] max-h-[95vh] flex items-center justify-center feature-modal-content rounded-lg sm:rounded-none overflow-hidden"
         style={animationStyle}
+        onClick={(e) => e.stopPropagation()}
       >
         {!hideCloseButton && (
           <button
