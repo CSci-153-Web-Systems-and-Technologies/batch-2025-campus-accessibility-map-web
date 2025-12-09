@@ -4,8 +4,12 @@ import { usePathname } from 'next/navigation'
 import { Sidebar } from '@/components/sidebar'
 import { AddMarkerButton } from './AddMarkerButton'
 import { AddBuildingButton } from './AddBuildingButton'
+import { EditRoutesButton } from './EditRoutesButton'
 import { MarkerCreationProvider, useMarkerCreation } from './MarkerCreationContext'
 import { BuildingCreationProvider, useBuildingCreation } from './BuildingCreationContext'
+import { RouteDrawingProvider } from './RouteDrawingContext'
+import { RouteDrawingOverlay } from './RouteDrawingOverlay'
+import { NodeTaggingModal } from './NodeTaggingModal'
 import { CreationModeOverlay } from './CreationModeOverlay'
 import { BuildingCreationOverlay } from './BuildingCreationOverlay'
 import { MarkerCreationModal } from './MarkerCreationModal'
@@ -39,6 +43,8 @@ function MapLayoutContent({
               <FiltersDrawer />
               <AddMarkerButton />
               <AddBuildingButton />
+              <EditRoutesButton />
+              <RouteDrawingOverlay />
             </>
           )}
           {isCreating && <CreationModeOverlay onCancel={closeModal} />}
@@ -66,6 +72,7 @@ function MapLayoutContent({
           )}
           <FeatureModal />
           <BuildingModal />
+          <NodeTaggingModal />
         </div>
         {hasOverlay && (
           <div className="absolute inset-0 z-10 bg-m3-surface/95 backdrop-blur-sm overflow-y-auto">
@@ -92,13 +99,15 @@ export function MapLayout({
   return (
     <MarkerCreationProvider>
       <BuildingCreationProvider>
+        <RouteDrawingProvider>
           <FeatureModalProvider>
             <BuildingModalProvider>
               <MapFiltersProvider>
-                  <MapLayoutContent>{children}</MapLayoutContent>
+                <MapLayoutContent>{children}</MapLayoutContent>
               </MapFiltersProvider>
             </BuildingModalProvider>
           </FeatureModalProvider>
+        </RouteDrawingProvider>
       </BuildingCreationProvider>
     </MarkerCreationProvider>
   )

@@ -12,6 +12,7 @@ import { useBuildingModal } from './BuildingModalContext'
 import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
 import { BuildingSearchMapControl } from './BuildingSearch'
+import { RouteDrawingControl } from './RouteDrawingControl'
 import type { Building } from '@/types/map'
 
 // Component to handle map resize and invalidate size
@@ -143,6 +144,7 @@ export default function CampusMap() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Campus Accessibility Map'
       />
       <BuildingSearchMapControl />
+      <RouteDrawingControl />
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
       <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
