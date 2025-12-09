@@ -63,7 +63,7 @@ export async function POST(
       )
     }
 
-    const fileExt = file.name.split('.').pop()
+    const fileExt = file.name.split('.').pop() || 'jpg'
     const fileName = `${featureId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
 
     const fileBuffer = await file.arrayBuffer()

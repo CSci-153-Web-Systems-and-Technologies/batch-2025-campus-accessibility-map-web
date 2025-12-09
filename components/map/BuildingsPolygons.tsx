@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { Polygon } from 'react-leaflet'
 import type { Building } from '@/types/map'
 import { useBuildingModal } from './BuildingModalContext'
@@ -111,13 +111,13 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
     }
   }
 
-  const polygons: JSX.Element[] = []
+  const polygons: ReactElement[] = []
 
   buildings.forEach((building) => {
     const isSelected = selectedBuilding?.id === building.id
     const polygonCoords = building.polygon_coordinates && building.polygon_coordinates.length > 0
       ? (building.polygon_coordinates as [number, number][])
-      : createBuildingPolygon(building.latitude, building.longitude)
+      : createBuildingPolygon(building.coordinates[0], building.coordinates[1])
 
     const pathOptions = isSelected ? SELECTED_POLYGON_STYLE : DEFAULT_POLYGON_STYLE
 
@@ -136,7 +136,6 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
         }}
         interactive={true}
         bubblingMouseEvents={false}
-        zIndexOffset={isCreatingMarker ? 1000 : 0}
       >
       </Polygon>
     )
