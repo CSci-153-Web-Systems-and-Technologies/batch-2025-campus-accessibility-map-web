@@ -98,6 +98,24 @@ export interface FeatureReport {
   resolved_by: string | null
 }
 
+export interface NodeTags {
+  hasStairs?: boolean
+  [key: string]: boolean | undefined
+}
+
+export interface RoutePolyline {
+  id: string
+  coordinates: number[][]
+  node_tags: Record<string, NodeTags>
+  created_by: string
+  name: string | null
+  description: string | null
+  is_public: boolean
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
 export type DatabaseInsert<T> = Omit<T, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
 export type DatabaseUpdate<T> = Partial<Omit<T, 'id' | 'created_at' | 'updated_at' | 'created_by'>>
 
@@ -109,6 +127,7 @@ export type FeatureLikeInsert = DatabaseInsert<FeatureLike>
 export type UserProfileInsert = DatabaseInsert<UserProfile>
 export type CommentReportInsert = DatabaseInsert<CommentReport>
 export type FeatureReportInsert = DatabaseInsert<FeatureReport>
+export type RoutePolylineInsert = DatabaseInsert<RoutePolyline>
 
 export type BuildingUpdate = DatabaseUpdate<Building>
 export type AccessibilityFeatureUpdate = DatabaseUpdate<AccessibilityFeature>
@@ -117,6 +136,7 @@ export type FeatureCommentUpdate = DatabaseUpdate<FeatureComment>
 export type UserProfileUpdate = DatabaseUpdate<UserProfile>
 export type CommentReportUpdate = DatabaseUpdate<CommentReport>
 export type FeatureReportUpdate = DatabaseUpdate<FeatureReport>
+export type RoutePolylineUpdate = DatabaseUpdate<RoutePolyline>
 
 export type ApiFeatureWithPhotos = Omit<AccessibilityFeature, 'feature_type'> & {
   feature_type: string

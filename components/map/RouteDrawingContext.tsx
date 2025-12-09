@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import type { GraphNode } from '@/lib/routing/RouteGraph';
 
+/** Context for managing route drawing state */
 interface RouteDrawingContextType {
   isDrawing: boolean;
   setDrawing: (drawing: boolean) => void;

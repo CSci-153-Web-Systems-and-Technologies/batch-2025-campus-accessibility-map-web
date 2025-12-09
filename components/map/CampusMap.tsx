@@ -13,9 +13,10 @@ import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
 import { BuildingSearchMapControl } from './BuildingSearch'
 import { RouteDrawingControl } from './RouteDrawingControl'
+import { RouteLoader } from './RouteLoader'
 import { RoutingControl } from './RoutingControl'
+import { RouteGraph } from '@/lib/routing/RouteGraph'
 import type { Building } from '@/types/map'
-import type { RouteGraph } from '@/lib/routing/RouteGraph'
 import type L from 'leaflet'
 
 // Component to handle map resize and invalidate size
@@ -79,7 +80,7 @@ export default function CampusMap({
 }: CampusMapProps = {}) {
   const [isMounted, setIsMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const graphRef = useRef<RouteGraph | null>(null)
+  const graphRef = useRef<RouteGraph | null>(new RouteGraph())
   const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
   const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, buildingsRefreshTrigger } = useBuildingCreation()
   const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
@@ -160,6 +161,7 @@ export default function CampusMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Campus Accessibility Map'
       />
       <BuildingSearchMapControl />
+      <RouteLoader graphRef={graphRef} />
       <RouteDrawingControl graphRef={graphRef} />
       {isSettingLocation !== undefined && (
         <RoutingControl
