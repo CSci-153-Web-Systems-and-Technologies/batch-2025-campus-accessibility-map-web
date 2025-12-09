@@ -30,7 +30,16 @@ export async function PATCH(
     const body = await request.json()
     const { resolved, type = 'comment' } = body
 
-    const updateData: any = {}
+    interface ReportUpdateData {
+      resolved_at: string | null
+      resolved_by: string | null
+    }
+
+    const updateData: ReportUpdateData = {
+      resolved_at: null,
+      resolved_by: null,
+    }
+
     if (resolved === true) {
       updateData.resolved_at = new Date().toISOString()
       updateData.resolved_by = user.id

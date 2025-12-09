@@ -20,6 +20,7 @@ import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 import { getFeatureColor, hexToRgba } from '@/lib/utils/feature-colors'
 import { ReportModal } from '@/components/ui/report-modal'
+import type { User } from '@supabase/supabase-js'
 
 interface FeaturePopupContentProps {
   feature: AccessibilityFeature
@@ -28,6 +29,10 @@ interface FeaturePopupContentProps {
 interface CommentWithUser extends FeatureComment {
   user_display_name?: string | null
   user_avatar_url?: string | null
+}
+
+interface CommentWithReplies extends CommentWithUser {
+  replies?: CommentWithReplies[]
 }
 
 interface LikeData {
@@ -44,7 +49,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [isLiking, setIsLiking] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [selectedComment, setSelectedComment] = useState<CommentWithUser | null>(null)
   const [isEditingFeature, setIsEditingFeature] = useState(false)
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
@@ -120,7 +125,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
       if (!commentsResult.error && commentsResult.data) {
         const flatComments: CommentWithUser[] = []
-        function flattenComments(comments: any[]) {
+        function flattenComments(comments: CommentWithReplies[]) {
           comments.forEach(comment => {
             flatComments.push({
               ...comment,
@@ -132,7 +137,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             }
           })
         }
-        flattenComments(commentsResult.data)
+        flattenComments(commentsResult.data as CommentWithReplies[])
         setComments(flatComments)
       }
       setIsLoadingComments(false)
@@ -351,7 +356,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
         if (!commentsError && commentsData) {
           const flatComments: CommentWithUser[] = []
-          function flattenComments(comments: any[]) {
+          function flattenComments(comments: CommentWithReplies[]) {
             comments.forEach(comment => {
               flatComments.push({
                 ...comment,
@@ -363,7 +368,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               }
             })
           }
-          flattenComments(commentsData)
+          flattenComments(commentsData as CommentWithReplies[])
           setComments(flatComments)
         }
       }
@@ -497,7 +502,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
         if (!commentsError && commentsData) {
           const flatComments: CommentWithUser[] = []
-          function flattenComments(comments: any[]) {
+          function flattenComments(comments: CommentWithReplies[]) {
             comments.forEach(comment => {
               flatComments.push({
                 ...comment,
@@ -509,7 +514,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               }
             })
           }
-          flattenComments(commentsData)
+          flattenComments(commentsData as CommentWithReplies[])
           setComments(flatComments)
         }
       }

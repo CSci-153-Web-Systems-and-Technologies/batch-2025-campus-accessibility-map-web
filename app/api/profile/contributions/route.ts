@@ -18,7 +18,11 @@ interface CommentContribution {
   feature_type: string | null
 }
 
-interface CommentWithFeature extends FeatureComment {
+interface CommentWithFeature {
+  id: string
+  content: string
+  created_at: string
+  feature_id: string
   accessibility_features: {
     id: string
     title: string
