@@ -144,25 +144,30 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
 
   return (
     <>
-      {standaloneFeatures.map((feature) => (
-        <Marker
-          key={feature.id}
-          position={feature.coordinates}
-          icon={iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)!}
-          eventHandlers={{
-            click: (e: LeafletMouseEvent) => {
-              const containerPoint = map.latLngToContainerPoint(e.latlng)
-              const mapContainer = map.getContainer()
-              const rect = mapContainer.getBoundingClientRect()
-              
-              openModal(feature, {
-                x: rect.left + containerPoint.x,
-                y: rect.top + containerPoint.y,
-              })
-            },
-          }}
-        />
-      ))}
+      {standaloneFeatures.map((feature) => {
+        const icon = iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)
+        if (!icon) return null
+        
+        return (
+          <Marker
+            key={feature.id}
+            position={feature.coordinates}
+            icon={icon}
+            eventHandlers={{
+              click: (e: LeafletMouseEvent) => {
+                const containerPoint = map.latLngToContainerPoint(e.latlng)
+                const mapContainer = map.getContainer()
+                const rect = mapContainer.getBoundingClientRect()
+                
+                openModal(feature, {
+                  x: rect.left + containerPoint.x,
+                  y: rect.top + containerPoint.y,
+                })
+              },
+            }}
+          />
+        )
+      })}
       {Array.from(featuresByBuilding.entries()).map(([buildingId, buildingFeatures]) => {
         const building = buildingMap.get(buildingId)
         if (!building) return null
@@ -172,11 +177,14 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
 
         return featuresToShow.map((feature, index) => {
           const stackedPosition = getStackedPosition(buildingCenter, index, featuresToShow.length)
+          const icon = iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)
+          if (!icon) return null
+          
           return (
             <Marker
               key={feature.id}
               position={stackedPosition}
-              icon={iconCache.get(feature.feature_type) || iconCache.get(FeatureType.RAMP)!}
+              icon={icon}
               interactive={false}
               zIndexOffset={selectedBuilding?.id === buildingId ? 500 : 0}
             />

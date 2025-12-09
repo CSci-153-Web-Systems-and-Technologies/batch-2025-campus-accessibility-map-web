@@ -178,14 +178,18 @@ export async function GET(request: Request) {
 
     commentReportsData.forEach((report: CommentReportData) => {
       if (report.reported_by) userIds.add(report.reported_by)
-      const comment = Array.isArray(report.feature_comments) ? report.feature_comments[0] : report.feature_comments
+      const comment = Array.isArray(report.feature_comments) 
+        ? (report.feature_comments.length > 0 ? report.feature_comments[0] : null)
+        : report.feature_comments
       if (comment?.user_id) userIds.add(comment.user_id)
       if (comment?.feature_id) featureIds.add(comment.feature_id)
     })
 
     featureReportsData.forEach((report: FeatureReportData) => {
       if (report.reported_by) userIds.add(report.reported_by)
-      const feature = Array.isArray(report.accessibility_features) ? report.accessibility_features[0] : report.accessibility_features
+      const feature = Array.isArray(report.accessibility_features) 
+        ? (report.accessibility_features.length > 0 ? report.accessibility_features[0] : null)
+        : report.accessibility_features
       if (feature?.created_by) userIds.add(feature.created_by)
       if (report.feature_id) featureIds.add(report.feature_id)
     })
@@ -218,17 +222,19 @@ export async function GET(request: Request) {
     // Process comment reports
     const commentReports = commentReportsData
       .filter((report: CommentReportData) => {
-        // Filter out reports where comment doesn't exist (shouldn't happen but handle it)
         const comment = Array.isArray(report.feature_comments) 
-          ? report.feature_comments[0] 
+          ? (report.feature_comments.length > 0 ? report.feature_comments[0] : null)
           : report.feature_comments
-        return comment !== null
+        return comment !== null && comment !== undefined
       })
       .map((report: CommentReportData) => {
-        // Handle both array and object responses from Supabase join
         const comment = Array.isArray(report.feature_comments) 
-          ? report.feature_comments[0] 
-          : report.feature_comments!
+          ? report.feature_comments[0]
+          : report.feature_comments
+        
+        if (!comment) {
+          throw new Error('Unexpected: comment should exist after filter')
+        }
         const feature = comment.feature_id ? featuresMap.get(comment.feature_id) : null
         const featureType = feature?.feature_type as string | undefined
         
@@ -254,14 +260,18 @@ export async function GET(request: Request) {
     const featureReports = featureReportsData
       .filter((report: FeatureReportData) => {
         const feature = Array.isArray(report.accessibility_features)
-          ? report.accessibility_features[0]
+          ? (report.accessibility_features.length > 0 ? report.accessibility_features[0] : null)
           : report.accessibility_features
-        return feature !== null
+        return feature !== null && feature !== undefined
       })
       .map((report: FeatureReportData) => {
         const feature = Array.isArray(report.accessibility_features)
           ? report.accessibility_features[0]
-          : report.accessibility_features!
+          : report.accessibility_features
+        
+        if (!feature) {
+          throw new Error('Unexpected: feature should exist after filter')
+        }
         
         return {
           ...report,
