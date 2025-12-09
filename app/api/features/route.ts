@@ -99,7 +99,6 @@ export async function POST(request: Request) {
       longitude: body.longitude,
       building_id: body.building_id || null,
       created_by: user.id,
-      deleted_at: null,
     }
 
     const { data, error } = await supabase
