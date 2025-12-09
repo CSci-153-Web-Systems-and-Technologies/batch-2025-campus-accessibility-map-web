@@ -77,7 +77,7 @@ export interface UserProfile {
   updated_at: string
 }
 
-export type DatabaseInsert<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>
+export type DatabaseInsert<T> = Omit<T, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
 export type DatabaseUpdate<T> = Partial<Omit<T, 'id' | 'created_at' | 'updated_at' | 'created_by'>>
 
 export type BuildingInsert = DatabaseInsert<Building>
