@@ -12,13 +12,15 @@ interface CampusMapWrapperProps {
   isSettingLocation?: boolean;
   onLocationSet?: (latlng: L.LatLng) => void;
   targetNodeId?: string | null;
-  onRouteCalculated?: () => void;
+  targetLocation?: { lat: number; lng: number } | null;
+  onRouteCalculated?: (distance?: number, hasStairs?: boolean) => void;
 }
 
 export function CampusMapWrapper({ 
   isSettingLocation, 
   onLocationSet, 
-  targetNodeId, 
+  targetNodeId,
+  targetLocation,
   onRouteCalculated 
 }: CampusMapWrapperProps) {
   return (
@@ -34,6 +36,7 @@ export function CampusMapWrapper({
         isSettingLocation={isSettingLocation}
         onLocationSet={onLocationSet}
         targetNodeId={targetNodeId}
+        targetLocation={targetLocation}
         onRouteCalculated={onRouteCalculated}
       />
     </Suspense>

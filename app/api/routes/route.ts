@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import type { RoutePolylineInsert } from '@/types/database';
+import type { RoutePolylineInsert, RoutePolylineUpdate } from '@/types/database';
 
 /** Fetches route polylines with optional filtering */
 export async function GET(request: Request) {

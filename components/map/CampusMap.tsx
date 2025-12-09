@@ -69,13 +69,15 @@ interface CampusMapProps {
   isSettingLocation?: boolean
   onLocationSet?: (latlng: L.LatLng) => void
   targetNodeId?: string | null
-  onRouteCalculated?: () => void
+  targetLocation?: { lat: number; lng: number } | null
+  onRouteCalculated?: (distance?: number, hasStairs?: boolean) => void
 }
 
 export default function CampusMap({
   isSettingLocation,
   onLocationSet,
   targetNodeId,
+  targetLocation,
   onRouteCalculated
 }: CampusMapProps = {}) {
   const [isMounted, setIsMounted] = useState(false)
@@ -154,6 +156,7 @@ export default function CampusMap({
       className="h-full w-full"
       worldCopyJump={false}
       zoomControl={!isMobile}
+      attributionControl={!isMobile}
     >
       <MapResizeHandler />
       <TileLayer
@@ -169,6 +172,7 @@ export default function CampusMap({
           isSettingLocation={isSettingLocation}
           onLocationSet={onLocationSet}
           targetNodeId={targetNodeId ?? null}
+          targetLocation={targetLocation ?? null}
           onRouteCalculated={onRouteCalculated}
         />
       )}

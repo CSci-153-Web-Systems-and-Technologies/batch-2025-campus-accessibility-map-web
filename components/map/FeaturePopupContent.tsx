@@ -21,6 +21,8 @@ import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 import { getFeatureColor, hexToRgba } from '@/lib/utils/feature-colors'
 import { ReportModal } from '@/components/ui/report-modal'
 import type { User } from '@supabase/supabase-js'
+import { RouteToHereButton } from './RouteToHereButton'
+import type L from 'leaflet'
 
 interface FeaturePopupContentProps {
   feature: AccessibilityFeature
@@ -552,7 +554,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         </div>
       )}
       <div className="w-full h-full flex flex-col sm:flex-col lg:flex-col bg-m3-surface rounded-lg border overflow-hidden sm:overflow-hidden overflow-y-auto relative">
-      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex-shrink-0">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex gap-2 flex-shrink-0">
+        <RouteToHereButton 
+          lat={feature.coordinates[0]}
+          lng={feature.coordinates[1]}
+        />
         {isFeatureOwner && !isEditingFeature ? (
           <EditDeleteControls
             onEdit={handleEditFeature}
@@ -763,7 +769,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               </div>
             ) : (
               <div>
-                <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-m3-primary leading-tight">
+                <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 mt-8 md:mt-10 text-m3-primary leading-tight">
                   {feature.title}
                 </h1>
                 <FeatureTypeBadge 
