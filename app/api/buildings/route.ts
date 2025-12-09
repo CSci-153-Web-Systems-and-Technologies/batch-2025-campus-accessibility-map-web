@@ -87,7 +87,6 @@ export async function POST(request: Request) {
       longitude: body.longitude,
       polygon_coordinates: body.polygon_coordinates || null,
       created_by: user.id,
-      deleted_at: null,
     }
 
     const { data, error } = await supabase
