@@ -1,163 +1,129 @@
-import { RouteGraph, RouteNode, RouteEdge } from './graph-utils';
+import { RouteGraph, GraphNode } from './RouteGraph';
 
-interface DijkstraResult {
-  path: string[]; // Array of node IDs
-  distance: number; // Total distance in meters
-  nodes: RouteNode[]; // Full node objects in path
+export interface PathResult {
+  path: string[];
+  distance: number;
+  nodes: GraphNode[];
+}
+
+export interface TagPenalty {
+  tag: string;
+  multiplier: number;
 }
 
 /**
- * Dijkstra's algorithm with tag filtering
- * 
- * @param graph - The route graph
- * @param startNodeId - Starting node ID
- * @param endNodeId - Ending node ID
- * @param avoidTags - Array of tags to avoid (e.g., ['has_stairs'])
- * @returns Path from start to end, or null if no path exists
+ * Finds the shortest path between two nodes using Dijkstra's algorithm.
+ * Applies penalty multipliers to nodes with specific tags (e.g., stairs).
  */
-export function findPath(
+export function dijkstra(
   graph: RouteGraph,
   startNodeId: string,
   endNodeId: string,
-  avoidTags: string[] = []
-): DijkstraResult | null {
-  // Filter out nodes with avoided tags
-  const validNodeIds = new Set(
-    graph.nodes
-      .filter((node) => !node.tags.some((tag) => avoidTags.includes(tag)))
-      .map((node) => node.id)
-  );
+  tagPenalties: TagPenalty[] = []
+): PathResult | null {
+  const distances = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const unvisited = new Set<string>();
 
-  // Check if start/end are valid
-  if (!validNodeIds.has(startNodeId) || !validNodeIds.has(endNodeId)) {
-    console.warn('Start or end node is filtered out or does not exist');
+  graph.getNodes().forEach((node, nodeId) => {
+    distances.set(nodeId, Infinity);
+    previous.set(nodeId, null);
+    unvisited.add(nodeId);
+  });
+
+  distances.set(startNodeId, 0);
+
+  while (unvisited.size > 0) {
+    let currentNodeId: string | null = null;
+    let smallestDistance = Infinity;
+
+    unvisited.forEach(nodeId => {
+      const distance = distances.get(nodeId) ?? Infinity;
+      if (distance < smallestDistance) {
+        smallestDistance = distance;
+        currentNodeId = nodeId;
+      }
+    });
+
+    if (currentNodeId === null || smallestDistance === Infinity) {
+      break;
+    }
+
+    if (currentNodeId === endNodeId) {
+      break;
+    }
+
+    unvisited.delete(currentNodeId);
+
+    const currentNode = graph.getNode(currentNodeId);
+    if (!currentNode) continue;
+
+    const neighbors = graph.getNeighbors(currentNodeId);
+    
+    neighbors.forEach(({ nodeId: neighborId, distance: edgeDistance }) => {
+      if (!unvisited.has(neighborId)) return;
+
+      const neighborNode = graph.getNode(neighborId);
+      if (!neighborNode) return;
+
+      let penaltyMultiplier = 1.0;
+      tagPenalties.forEach(({ tag, multiplier }) => {
+        if (neighborNode.tags.includes(tag)) {
+          penaltyMultiplier = Math.max(penaltyMultiplier, multiplier);
+        }
+      });
+
+      if (currentNodeId === null) return;
+      
+      const currentDistance = distances.get(currentNodeId) ?? Infinity;
+      const penalizedDistance = edgeDistance * penaltyMultiplier;
+      const newDistance = currentDistance + penalizedDistance;
+      const existingDistance = distances.get(neighborId) ?? Infinity;
+
+      if (newDistance < existingDistance) {
+        distances.set(neighborId, newDistance);
+        previous.set(neighborId, currentNodeId);
+      }
+    });
+  }
+
+  const finalDistance = distances.get(endNodeId) ?? Infinity;
+  if (finalDistance === Infinity) {
+    console.log('No path found from', startNodeId, 'to', endNodeId);
     return null;
   }
 
-  // Filter edges to only include valid nodes
-  const validEdges = graph.edges.filter(
-    (edge) => validNodeIds.has(edge.source) && validNodeIds.has(edge.target)
-  );
-
-  // Build adjacency list
-  const adjacency: Record<string, { nodeId: string; weight: number }[]> = {};
-  
-  validNodeIds.forEach((nodeId) => {
-    adjacency[nodeId] = [];
-  });
-
-  validEdges.forEach((edge) => {
-    // Bidirectional edges
-    adjacency[edge.source].push({ nodeId: edge.target, weight: edge.weight });
-    adjacency[edge.target].push({ nodeId: edge.source, weight: edge.weight });
-  });
-
-  // Dijkstra's algorithm
-  const distances: Record<string, number> = {};
-  const previous: Record<string, string | null> = {};
-  const unvisited = new Set(validNodeIds);
-
-  // Initialize distances
-  validNodeIds.forEach((nodeId) => {
-    distances[nodeId] = Infinity;
-    previous[nodeId] = null;
-  });
-  distances[startNodeId] = 0;
-
-  while (unvisited.size > 0) {
-    // Find node with minimum distance
-    let currentNode: string | null = null;
-    let minDistance = Infinity;
-
-    unvisited.forEach((nodeId) => {
-      if (distances[nodeId] < minDistance) {
-        minDistance = distances[nodeId];
-        currentNode = nodeId;
-      }
-    });
-
-    if (currentNode === null || minDistance === Infinity) {
-      // No path exists
-      break;
-    }
-
-    // Found the end node
-    if (currentNode === endNodeId) {
-      break;
-    }
-
-    unvisited.delete(currentNode);
-
-    // Update distances to neighbors
-    adjacency[currentNode].forEach(({ nodeId, weight }) => {
-      if (unvisited.has(nodeId)) {
-        const alt = distances[currentNode!] + weight;
-        if (alt < distances[nodeId]) {
-          distances[nodeId] = alt;
-          previous[nodeId] = currentNode;
-        }
-      }
-    });
-  }
-
-  // Reconstruct path
-  if (distances[endNodeId] === Infinity) {
-    return null; // No path found
-  }
-
   const path: string[] = [];
-  let current: string | null = endNodeId;
+  let currentId: string | null = endNodeId;
 
-  while (current !== null) {
-    path.unshift(current);
-    current = previous[current];
+  while (currentId !== null) {
+    path.unshift(currentId);
+    currentId = previous.get(currentId) ?? null;
   }
 
-  // Get full node objects
-  const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
-  const nodes = path.map((id) => nodeMap.get(id)!);
+  const nodes = path.map(id => graph.getNode(id)).filter((node): node is GraphNode => node !== undefined);
 
   return {
     path,
-    distance: distances[endNodeId],
+    distance: finalDistance,
     nodes,
   };
 }
 
 /**
- * Find all possible paths and return the shortest
+ * Finds the nearest node in the graph to a given location.
  */
-export function findShortestPath(
-  graph: RouteGraph,
-  startNodeId: string,
-  endNodeId: string,
-  avoidTags: string[] = []
-): DijkstraResult | null {
-  return findPath(graph, startNodeId, endNodeId, avoidTags);
-}
+export function findNearestNode(graph: RouteGraph, latlng: L.LatLng): GraphNode | null {
+  let nearestNode: GraphNode | null = null;
+  let minDistance = Infinity;
 
-/**
- * Log path finding results
- */
-export function logPathResult(
-  result: DijkstraResult | null,
-  avoidTags: string[]
-) {
-  if (!result) {
-    console.log('❌ No path found');
-    if (avoidTags.length > 0) {
-      console.log(`   (Avoiding tags: ${avoidTags.join(', ')})`);
+  graph.getNodes().forEach(node => {
+    const distance = node.latlng.distanceTo(latlng);
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestNode = node;
     }
-    return;
-  }
+  });
 
-  console.log('✅ Path found!');
-  console.log(`   Distance: ${result.distance.toFixed(2)}m`);
-  console.log(`   Steps: ${result.nodes.length} nodes`);
-  console.log('   Path:', result.path);
-  console.log('   Nodes:', result.nodes);
-  
-  if (avoidTags.length > 0) {
-    console.log(`   ✓ Avoided: ${avoidTags.join(', ')}`);
-  }
+  return nearestNode;
 }

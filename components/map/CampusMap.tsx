@@ -1,7 +1,7 @@
 'use client'
 
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { VSU_CAMPUS_CONFIG } from '@/types/map'
 import { configureLeafletIcons } from '@/lib/leaflet/icon-config'
 import { MapClickHandler } from './MapClickHandler'
@@ -13,7 +13,10 @@ import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
 import { BuildingSearchMapControl } from './BuildingSearch'
 import { RouteDrawingControl } from './RouteDrawingControl'
+import { RoutingControl } from './RoutingControl'
 import type { Building } from '@/types/map'
+import type { RouteGraph } from '@/lib/routing/RouteGraph'
+import type L from 'leaflet'
 
 // Component to handle map resize and invalidate size
 function MapResizeHandler() {
@@ -61,9 +64,22 @@ function MapResizeHandler() {
   return null
 }
 
-export default function CampusMap() {
+interface CampusMapProps {
+  isSettingLocation?: boolean
+  onLocationSet?: (latlng: L.LatLng) => void
+  targetNodeId?: string | null
+  onRouteCalculated?: () => void
+}
+
+export default function CampusMap({
+  isSettingLocation,
+  onLocationSet,
+  targetNodeId,
+  onRouteCalculated
+}: CampusMapProps = {}) {
   const [isMounted, setIsMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const graphRef = useRef<RouteGraph | null>(null)
   const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
   const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, buildingsRefreshTrigger } = useBuildingCreation()
   const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
@@ -144,7 +160,16 @@ export default function CampusMap() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Campus Accessibility Map'
       />
       <BuildingSearchMapControl />
-      <RouteDrawingControl />
+      <RouteDrawingControl graphRef={graphRef} />
+      {isSettingLocation !== undefined && (
+        <RoutingControl
+          graphRef={graphRef}
+          isSettingLocation={isSettingLocation}
+          onLocationSet={onLocationSet}
+          targetNodeId={targetNodeId ?? null}
+          onRouteCalculated={onRouteCalculated}
+        />
+      )}
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
       <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
