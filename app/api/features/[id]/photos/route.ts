@@ -80,12 +80,11 @@ export async function POST(
         error: uploadError,
         message: uploadError.message,
         name: uploadError.name,
-        statusCode: uploadError.statusCode,
         bucket: STORAGE_BUCKET,
         fileName,
       })
       return NextResponse.json(
-        { error: 'Failed to upload file to storage', details: uploadError.message, statusCode: uploadError.statusCode },
+        { error: 'Failed to upload file to storage', details: uploadError.message },
         { status: 500 }
       )
     }
