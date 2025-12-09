@@ -4,6 +4,7 @@ import { FaRoute } from 'react-icons/fa';
 import { useRouteDrawing } from './RouteDrawingContext';
 import { useAdmin } from '@/lib/hooks/use-admin';
 
+/** Button to toggle route drawing/editing mode (admin only) */
 export function EditRoutesButton() {
   const { isDrawing, setDrawing } = useRouteDrawing();
   const { isAdmin, isLoading } = useAdmin();
