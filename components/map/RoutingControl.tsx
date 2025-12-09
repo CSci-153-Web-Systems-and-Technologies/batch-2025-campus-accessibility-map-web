@@ -11,14 +11,17 @@ interface RoutingControlProps {
   isSettingLocation: boolean;
   onLocationSet?: (latlng: L.LatLng) => void;
   targetNodeId: string | null;
-  onRouteCalculated?: () => void;
+  targetLocation: { lat: number; lng: number } | null;
+  onRouteCalculated?: (distance?: number, hasStairs?: boolean) => void;
 }
 
+/** Handles user location placement and route calculation */
 export function RoutingControl({ 
   graphRef, 
   isSettingLocation, 
   onLocationSet,
   targetNodeId,
+  targetLocation,
   onRouteCalculated
 }: RoutingControlProps) {
   const map = useMap();
@@ -29,7 +32,7 @@ export function RoutingControl({
   useEffect(() => {
     if (!isSettingLocation) return;
 
-    const handleMapClick = (e: L.LeafletMouseEvent) => {
+    const handleMapClick = (e: L.LeafletMouseEvent): void => {
       setUserLocation(e.latlng);
       onLocationSet?.(e.latlng);
 
@@ -56,7 +59,27 @@ export function RoutingControl({
   }, [isSettingLocation, map, onLocationSet]);
 
   useEffect(() => {
-    if (!userLocation || !targetNodeId || !graphRef.current) return;
+    if (!targetNodeId && !targetLocation) {
+      if (routeLineRef.current) {
+        map.removeLayer(routeLineRef.current);
+        routeLineRef.current = null;
+      }
+      return;
+    }
+
+    if (!userLocation || !graphRef.current) return;
+
+    let finalTargetNodeId = targetNodeId;
+    
+    if (!finalTargetNodeId && targetLocation) {
+      const targetLatLng = L.latLng(targetLocation.lat, targetLocation.lng);
+      const targetNode = findNearestNode(graphRef.current, targetLatLng);
+      if (targetNode) {
+        finalTargetNodeId = targetNode.id;
+      }
+    }
+
+    if (!finalTargetNodeId) return;
 
     if (routeLineRef.current) {
       map.removeLayer(routeLineRef.current);
@@ -69,8 +92,7 @@ export function RoutingControl({
       return;
     }
     
-    // Apply 10x penalty to stairs - makes them much less desirable but still usable as fallback
-    const result = dijkstra(graphRef.current, startNode.id, targetNodeId, [
+    const result = dijkstra(graphRef.current, startNode.id, finalTargetNodeId, [
       { tag: 'has_stairs', multiplier: 10.0 }
     ]);
     
@@ -98,8 +120,13 @@ export function RoutingControl({
 
     map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
 
-    onRouteCalculated?.();
-  }, [userLocation, targetNodeId, graphRef, map, onRouteCalculated]);
+    let totalDistance = 0;
+    for (let i = 0; i < routeCoords.length - 1; i++) {
+      totalDistance += routeCoords[i].distanceTo(routeCoords[i + 1]);
+    }
+
+    onRouteCalculated?.(totalDistance, hasStairs);
+  }, [userLocation, targetNodeId, targetLocation, graphRef, map]);
 
   useEffect(() => {
     return () => {
