@@ -1,6 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { type FeatureCommentInsert } from '@/types/database'
+import { type FeatureComment, type FeatureCommentInsert } from '@/types/database'
+
+interface ProfileData {
+  id: string
+  display_name: string | null
+  avatar_url: string | null
+}
+
+interface CommentWithProfile extends FeatureComment {
+  user_display_name: string | null
+  user_avatar_url: string | null
+}
 
 export async function GET(
   request: Request,
@@ -39,23 +50,23 @@ export async function GET(
       )
     }
 
-    const comments = commentsData || []
+    const comments = (commentsData || []) as FeatureComment[]
     
-    const userIds = [...new Set(comments.map((c: any) => c.user_id))]
+    const userIds = [...new Set(comments.map((c) => c.user_id))]
     
     const { data: profilesData } = await supabase
       .from('user_profiles')
       .select('id, display_name, avatar_url')
       .in('id', userIds)
 
-    const profilesMap = new Map()
+    const profilesMap = new Map<string, ProfileData>()
     if (profilesData) {
-      profilesData.forEach((profile: any) => {
-        profilesMap.set(profile.id, profile)
+      profilesData.forEach((profile) => {
+        profilesMap.set(profile.id, profile as ProfileData)
       })
     }
 
-    const commentsWithProfiles = comments.map((comment: any) => {
+    const commentsWithProfiles: CommentWithProfile[] = comments.map((comment) => {
       const profile = profilesMap.get(comment.user_id)
       return {
         ...comment,
@@ -64,8 +75,8 @@ export async function GET(
       }
     })
 
-    const commentsMap = new Map()
-    const rootComments: (typeof commentsWithProfiles[0] & { replies?: typeof commentsWithProfiles })[] = []
+    const commentsMap = new Map<string, CommentWithProfile & { replies: CommentWithProfile[] }>()
+    const rootComments: (CommentWithProfile & { replies?: CommentWithProfile[] })[] = []
 
     commentsWithProfiles.forEach((comment) => {
       commentsMap.set(comment.id, { ...comment, replies: [] })

@@ -77,6 +77,27 @@ export interface UserProfile {
   updated_at: string
 }
 
+export interface CommentReport {
+  id: string
+  comment_id: string
+  reported_by: string
+  reason: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+}
+
+export interface FeatureReport {
+  id: string
+  feature_id: string
+  reported_by: string
+  reason: string | null
+  created_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+}
+
 export type DatabaseInsert<T> = Omit<T, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
 export type DatabaseUpdate<T> = Partial<Omit<T, 'id' | 'created_at' | 'updated_at' | 'created_by'>>
 
@@ -86,12 +107,16 @@ export type FeaturePhotoInsert = DatabaseInsert<FeaturePhoto>
 export type FeatureCommentInsert = DatabaseInsert<FeatureComment>
 export type FeatureLikeInsert = DatabaseInsert<FeatureLike>
 export type UserProfileInsert = DatabaseInsert<UserProfile>
+export type CommentReportInsert = DatabaseInsert<CommentReport>
+export type FeatureReportInsert = DatabaseInsert<FeatureReport>
 
 export type BuildingUpdate = DatabaseUpdate<Building>
 export type AccessibilityFeatureUpdate = DatabaseUpdate<AccessibilityFeature>
 export type FeaturePhotoUpdate = DatabaseUpdate<FeaturePhoto>
 export type FeatureCommentUpdate = DatabaseUpdate<FeatureComment>
 export type UserProfileUpdate = DatabaseUpdate<UserProfile>
+export type CommentReportUpdate = DatabaseUpdate<CommentReport>
+export type FeatureReportUpdate = DatabaseUpdate<FeatureReport>
 
 export type ApiFeatureWithPhotos = Omit<AccessibilityFeature, 'feature_type'> & {
   feature_type: string

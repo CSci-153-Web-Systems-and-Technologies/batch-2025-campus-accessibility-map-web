@@ -93,8 +93,8 @@ export function ProfileSetupModal() {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to save')
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setIsSaving(false)
     }

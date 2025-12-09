@@ -5,12 +5,13 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { safeFetch } from '@/lib/fetch-utils'
 import { formatFeatureType } from '@/lib/utils/feature-utils'
-import { FeatureType } from '@/types/database'
+import { FeatureType, type UserProfile } from '@/types/database'
 import type { AccessibilityFeature } from '@/types/map'
 import { useFeatureModal } from '@/components/map/FeatureModalContext'
 import { useRouter } from 'next/navigation'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
+import type { User } from '@supabase/supabase-js'
 
 interface UserFeature {
   id: string
@@ -28,9 +29,33 @@ interface UserComment {
   feature_type: string | null
 }
 
+interface FeatureApiResponse {
+  id: string
+  feature_type: string
+  title: string
+  description: string | null
+  latitude: number
+  longitude: number
+  building_id: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  photos: Array<{
+    id: string
+    photo_url: string
+    full_url: string
+    uploaded_by: string
+    caption: string | null
+    is_primary: boolean
+    created_at: string
+    deleted_at: string | null
+  }>
+}
+
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [features, setFeatures] = useState<UserFeature[]>([])
   const [comments, setComments] = useState<UserComment[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -79,7 +104,7 @@ export default function ProfilePage() {
   }
 
   const handleFeatureClick = async (featureId: string) => {
-    const { data, error } = await safeFetch<any>(
+    const { data, error } = await safeFetch<FeatureApiResponse>(
       `/api/features/${featureId}`
     )
 
@@ -88,7 +113,7 @@ export default function ProfilePage() {
         ...data,
         feature_type: data.feature_type as FeatureType,
         coordinates: [data.latitude, data.longitude] as [number, number],
-        photos: (data.photos || []).map((photo: any) => ({
+        photos: data.photos.map((photo) => ({
           id: photo.id,
           feature_id: data.id,
           photo_url: photo.photo_url,
