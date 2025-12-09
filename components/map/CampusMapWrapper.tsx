@@ -2,12 +2,25 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import type L from 'leaflet'
 
 const CampusMap = dynamic(() => import('./CampusMap'), {
   ssr: false,
 })
 
-export function CampusMapWrapper() {
+interface CampusMapWrapperProps {
+  isSettingLocation?: boolean;
+  onLocationSet?: (latlng: L.LatLng) => void;
+  targetNodeId?: string | null;
+  onRouteCalculated?: () => void;
+}
+
+export function CampusMapWrapper({ 
+  isSettingLocation, 
+  onLocationSet, 
+  targetNodeId, 
+  onRouteCalculated 
+}: CampusMapWrapperProps) {
   return (
     <Suspense fallback={
       <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -17,7 +30,12 @@ export function CampusMapWrapper() {
         </div>
       </div>
     }>
-      <CampusMap />
+      <CampusMap 
+        isSettingLocation={isSettingLocation}
+        onLocationSet={onLocationSet}
+        targetNodeId={targetNodeId}
+        onRouteCalculated={onRouteCalculated}
+      />
     </Suspense>
   )
 }

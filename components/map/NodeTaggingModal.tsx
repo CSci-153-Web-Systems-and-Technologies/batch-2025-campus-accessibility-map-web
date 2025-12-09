@@ -7,7 +7,7 @@ const AVAILABLE_TAGS = [
   { id: 'has_stairs', label: 'Has Stairs', color: 'bg-m3-error' },
 ];
 
-export function NodeTaggingModal() {
+export function NodeTaggingModal({ onRouteHere }: { onRouteHere?: (nodeId: string) => void }) {
   const { selectedNode, setSelectedNode } = useRouteDrawing();
   const [tags, setTags] = useState<string[]>([]);
 
@@ -31,6 +31,13 @@ export function NodeTaggingModal() {
     }
     console.log('Saved tags:', selectedNode.id, tags);
     setSelectedNode(null);
+  };
+
+  const handleRouteHere = () => {
+    if (onRouteHere) {
+      onRouteHere(selectedNode.id);
+      setSelectedNode(null);
+    }
   };
 
   return (
@@ -80,6 +87,14 @@ export function NodeTaggingModal() {
         </div>
 
         <div className="flex justify-end gap-3 p-4 border-t border-m3-outline">
+          {onRouteHere && (
+            <button
+              onClick={handleRouteHere}
+              className="px-4 py-2 bg-m3-tertiary text-m3-on-tertiary rounded hover:bg-m3-tertiary/90 transition-colors"
+            >
+              Route Here
+            </button>
+          )}
           <button
             onClick={() => setSelectedNode(null)}
             className="px-4 py-2 text-m3-on-surface hover:bg-m3-surface-variant rounded transition-colors"

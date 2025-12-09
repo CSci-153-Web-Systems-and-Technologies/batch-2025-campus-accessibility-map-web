@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, RefObject } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useRouteDrawing } from './RouteDrawingContext';
@@ -21,15 +21,23 @@ const createNodeIcon = (tags: string[]) => {
   });
 };
 
-export function RouteDrawingControl() {
+interface RouteDrawingControlProps {
+  graphRef: RefObject<RouteGraph | null>
+}
+
+export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
   const map = useMap();
   const { isDrawing, setSelectedNode } = useRouteDrawing();
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
   const nodeLayerRef = useRef<L.LayerGroup | null>(null);
-  const graphRef = useRef<RouteGraph>(new RouteGraph());
+  const localGraphRef = useRef<RouteGraph>(new RouteGraph());
   const nodeMarkersRef = useRef<Map<string, L.Marker>>(new Map());
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const snapIndicatorRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    graphRef.current = localGraphRef.current;
+  }, [graphRef]);
 
   useEffect(() => {
     if (!isDrawing) return;
@@ -79,13 +87,13 @@ export function RouteDrawingControl() {
     drawControlRef.current = drawControl;
     map.addControl(drawControl);
 
-    const SNAP_DISTANCE = 25;
+    const SNAP_DISTANCE = 80;
     
     const findNearestNode = (latlng: L.LatLng): GraphNode | null => {
       let nearestNode: GraphNode | null = null;
       let minDistance = Infinity;
 
-      graphRef.current.getNodes().forEach((node) => {
+      localGraphRef.current.getNodes().forEach((node) => {
         const point1 = map.latLngToContainerPoint(latlng);
         const point2 = map.latLngToContainerPoint(node.latlng);
         const distance = point1.distanceTo(point2);
@@ -177,8 +185,8 @@ export function RouteDrawingControl() {
     };
 
     const updateNodeTags = (nodeId: string, tags: string[]) => {
-      graphRef.current.updateNodeTags(nodeId, tags);
-      const node = graphRef.current.getNode(nodeId);
+      localGraphRef.current.updateNodeTags(nodeId, tags);
+      const node = localGraphRef.current.getNode(nodeId);
       if (node) {
         updateNodeMarker(node);
         console.log('Node tags updated:', nodeId, tags);
@@ -194,10 +202,11 @@ export function RouteDrawingControl() {
       if (layer instanceof L.Polyline) {
         const latlngs = layer.getLatLngs() as L.LatLng[];
         console.log('🎨 Route drawn:', latlngs.length, 'points');
+        (layer as any)._originalLatLngs = latlngs.map(ll => L.latLng(ll.lat, ll.lng));
         
-        const { nodes } = graphRef.current.addPolyline(latlngs, polylineId);
+        const { nodes } = localGraphRef.current.addPolyline(latlngs, polylineId);
         nodes.forEach(node => updateNodeMarker(node));
-        graphRef.current.printStats();
+        localGraphRef.current.printStats();
       }
     };
 
@@ -207,26 +216,44 @@ export function RouteDrawingControl() {
         if (layer instanceof L.Polyline) {
           let latlngs = layer.getLatLngs() as L.LatLng[];
           const polylineId = (layer as any)._polylineId;
+          const originalLatLngs = (layer as any)._originalLatLngs || [];
           console.log('✏️ Route edited:', polylineId, latlngs.length, 'vertices');
           
           if (polylineId) {
-            console.log('=== Starting snap check ===');
+            localGraphRef.current.removePolyline(polylineId);
+            drawnItemsRef.current?.removeLayer(layer);
             
-            graphRef.current.removePolyline(polylineId);
-            console.log('Temporarily removed polyline from graph');
-            console.log('Remaining nodes for snapping:', graphRef.current.getNodes().size);
+            const movedVertices = new Set<number>();
+            latlngs.forEach((latlng, index) => {
+              if (index < originalLatLngs.length) {
+                const distance = latlng.distanceTo(originalLatLngs[index]);
+                if (distance > 1) {
+                  movedVertices.add(index);
+                }
+              }
+            });
             
             const snappedLatLngs = latlngs.map((latlng, index) => {
+              if (!movedVertices.has(index)) {
+                return latlng;
+              }
+              
               const nearestNode = findNearestNode(latlng);
               if (nearestNode) {
-                console.log(`✅ Vertex ${index} SNAPPED to node ${nearestNode.id}`);
-                showSnapIndicator(nearestNode.latlng, 'node');
-                return nearestNode.latlng;
+                const nodePoint = map.latLngToContainerPoint(nearestNode.latlng);
+                const vertexPoint = map.latLngToContainerPoint(latlng);
+                const nodeDistance = nodePoint.distanceTo(vertexPoint);
+                
+                if (nodeDistance < 30) {
+                  console.log(`✅ Vertex ${index} snapped to node (${nodeDistance.toFixed(1)}px)`);
+                  showSnapIndicator(nearestNode.latlng, 'node');
+                  return nearestNode.latlng;
+                }
               }
               
               const nearestLine = findNearestLinePoint(latlng);
               if (nearestLine && nearestLine.layer !== layer) {
-                console.log(`✅ Vertex ${index} SNAPPED to line - inserting vertex`);
+                console.log(`✅ Vertex ${index} snapped to line - inserting node`);
                 showSnapIndicator(nearestLine.latlng, 'line');
                 
                 const existingLatLngs = nearestLine.layer.getLatLngs() as L.LatLng[];
@@ -236,33 +263,35 @@ export function RouteDrawingControl() {
                 nearestLine.layer.setLatLngs(existingLatLngs);
                 
                 if (existingPolylineId) {
-                  console.log('Updating graph for modified line:', existingPolylineId);
-                  graphRef.current.removePolyline(existingPolylineId);
-                  const { nodes: updatedNodes } = graphRef.current.addPolyline(existingLatLngs, existingPolylineId);
+                  localGraphRef.current.removePolyline(existingPolylineId);
+                  const { nodes: updatedNodes } = localGraphRef.current.addPolyline(existingLatLngs, existingPolylineId);
                   updatedNodes.forEach(node => updateNodeMarker(node));
+                  const insertedNode = localGraphRef.current.findNodeAt(nearestLine.latlng);
+                  if (insertedNode) {
+                    return insertedNode.latlng;
+                  }
                 }
                 
                 return nearestLine.latlng;
               }
               
-              console.log(`⚪ Vertex ${index} - no snap target found`);
               return latlng;
             });
             
-            console.log('=== Snap check complete ===');
-            
             layer.setLatLngs(snappedLatLngs);
+            (layer as any)._originalLatLngs = snappedLatLngs.map(ll => L.latLng(ll.lat, ll.lng));
+            drawnItemsRef.current?.addLayer(layer);
             
-            const currentNodeIds = new Set(Array.from(graphRef.current.getNodes().keys()));
+            const currentNodeIds = new Set(Array.from(localGraphRef.current.getNodes().keys()));
             nodeMarkersRef.current.forEach((marker, nodeId) => {
               if (!currentNodeIds.has(nodeId)) {
                 removeNodeMarker(nodeId);
               }
             });
             
-            const { nodes } = graphRef.current.addPolyline(snappedLatLngs, polylineId);
+            const { nodes } = localGraphRef.current.addPolyline(snappedLatLngs, polylineId);
             nodes.forEach(node => updateNodeMarker(node));
-            graphRef.current.printStats();
+            localGraphRef.current.printStats();
           }
         }
       });
@@ -275,16 +304,16 @@ export function RouteDrawingControl() {
         
         if (polylineId) {
           console.log('🗑️ Route deleted:', polylineId);
-          graphRef.current.removePolyline(polylineId);
+          localGraphRef.current.removePolyline(polylineId);
           
-          const currentNodeIds = new Set(Array.from(graphRef.current.getNodes().keys()));
+          const currentNodeIds = new Set(Array.from(localGraphRef.current.getNodes().keys()));
           nodeMarkersRef.current.forEach((marker, nodeId) => {
             if (!currentNodeIds.has(nodeId)) {
               removeNodeMarker(nodeId);
             }
           });
           
-          graphRef.current.printStats();
+          localGraphRef.current.printStats();
         }
       });
     };
@@ -325,7 +354,7 @@ export function RouteDrawingControl() {
     });
 
     (window as any).updateRouteNodeTags = updateNodeTags;
-    (window as any).routeGraph = graphRef.current;
+    (window as any).routeGraph = localGraphRef.current;
 
     return () => {
       if (drawControlRef.current) {
@@ -353,3 +382,4 @@ export function RouteDrawingControl() {
 
   return null;
 }
+
