@@ -196,7 +196,7 @@ export default function SettingsPage() {
     }
   }
 
-  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User'
+  const displayName = profile?.display_name || (user?.email?.split('@')[0] ?? 'User')
   const avatarUrl = profile?.avatar_url || null
 
   if (isLoading) {

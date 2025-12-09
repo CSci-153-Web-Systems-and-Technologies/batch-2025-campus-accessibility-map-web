@@ -10,8 +10,8 @@ export async function GET(request: Request) {
     
     const featureType = searchParams.get('feature_type')
     const buildingId = searchParams.get('building_id')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
 
     let query = supabase
       .from('accessibility_features')

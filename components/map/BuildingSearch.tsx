@@ -67,6 +67,11 @@ export function BuildingSearchMapControl() {
     }
   }, [searchQuery])
 
+  const clearSearch = useCallback(() => {
+    setSearchQuery('')
+    setShowResults(false)
+  }, [])
+
   const handleBuildingSelect = useCallback((building: Building) => {
     const origin = mapInstance ? {
       x: mapInstance.getContainer().getBoundingClientRect().left + mapInstance.getContainer().offsetWidth / 2,

@@ -23,11 +23,11 @@ interface CommentWithFeature {
   content: string
   created_at: string
   feature_id: string
-  accessibility_features: {
+  accessibility_features: Array<{
     id: string
     title: string
     feature_type: string
-  } | null
+  }>
 }
 
 export async function GET(request: Request) {
@@ -73,14 +73,17 @@ export async function GET(request: Request) {
       console.error('Error fetching comments:', commentsResult.error)
     }
 
-    const comments: CommentContribution[] = (commentsResult.data || []).map((comment: CommentWithFeature) => ({
-      id: comment.id,
-      content: comment.content,
-      created_at: comment.created_at,
-      feature_id: comment.feature_id,
-      feature_title: comment.accessibility_features?.title || 'Unknown Feature',
-      feature_type: comment.accessibility_features?.feature_type || null,
-    }))
+    const comments: CommentContribution[] = (commentsResult.data || []).map((comment: CommentWithFeature) => {
+      const feature = comment.accessibility_features.length > 0 ? comment.accessibility_features[0] : null
+      return {
+        id: comment.id,
+        content: comment.content,
+        created_at: comment.created_at,
+        feature_id: comment.feature_id,
+        feature_title: feature?.title || 'Unknown Feature',
+        feature_type: feature?.feature_type || null,
+      }
+    })
 
     const features: FeatureContribution[] = (featuresResult.data || []).map((f: Pick<AccessibilityFeature, 'id' | 'title' | 'feature_type' | 'created_at'>) => ({
       id: f.id,
