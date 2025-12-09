@@ -85,11 +85,15 @@ export async function GET(
     commentsWithProfiles.forEach((comment) => {
       if (comment.parent_id) {
         const parent = commentsMap.get(comment.parent_id)
-        if (parent) {
-          parent.replies.push(commentsMap.get(comment.id))
+        const currentComment = commentsMap.get(comment.id)
+        if (parent && currentComment) {
+          parent.replies.push(currentComment)
         }
       } else {
-        rootComments.push(commentsMap.get(comment.id))
+        const currentComment = commentsMap.get(comment.id)
+        if (currentComment) {
+          rootComments.push(currentComment)
+        }
       }
     })
 
