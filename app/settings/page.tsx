@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Camera, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { ThemeSelector } from '@/components/theme-selector'
+import type { User } from '@supabase/supabase-js'
+import type { UserProfile } from '@/types/database'
 
 export default function SettingsPage() {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function SettingsPage() {
       setUser(currentUser)
 
       const { data, error } = await safeFetch<{
-        profile: any
+        profile: UserProfile | null
         email: string
       }>('/api/profile')
 
@@ -123,10 +125,10 @@ export default function SettingsPage() {
 
         const result = await response.json()
         if (result.data?.avatar_url) {
-          setProfile((prev: any) => ({
+          setProfile((prev) => prev ? {
             ...prev,
             avatar_url: result.data.avatar_url,
-          }))
+          } : null)
         }
       } catch (error) {
         console.error('Error uploading avatar:', error)
