@@ -56,6 +56,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [selectedComment, setSelectedComment] = useState<CommentWithUser | null>(null)
   const [localFeature, setLocalFeature] = useState(feature)
   const [isEditingFeature, setIsEditingFeature] = useState(false)
+  const [editFeatureData, setEditFeatureData] = useState({
+    title: feature.title,
+    description: feature.description || '',
+    feature_type: feature.feature_type,
+  })
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -63,9 +68,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     })
   }, [])
   const [editCommentContent, setEditCommentContent] = useState('')
-  useEffect(() => {
-    if (!user) return
-    const supabase = createClient()
   const [isReportingComment, setIsReportingComment] = useState(false)
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
   const [showReportCommentModal, setShowReportCommentModal] = useState(false)
@@ -78,16 +80,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [localPhotos, setLocalPhotos] = useState(feature.photos || [])
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null)
   const { closeModal } = useFeatureModal()
-
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-  }, [])
-  useEffect(() => {
-    if (localFeature.building_id) {
-    // fetch profile for the logged in user to show display name/avatar in optimistic updates
     if (!user) return
     const supabase = createClient()
 
