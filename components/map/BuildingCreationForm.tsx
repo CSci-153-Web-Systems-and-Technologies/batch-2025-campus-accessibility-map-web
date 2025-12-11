@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { useBuildingCreation } from './BuildingCreationContext'
+import { transformApiBuildingToMapBuilding } from '@/lib/utils/building-transform'
 
 interface BuildingCreationFormProps {
   onSuccess: () => void
@@ -19,7 +20,7 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
   const [description, setDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { refreshBuildings, polygonCoordinates } = useBuildingCreation()
+  const { addNewBuilding, polygonCoordinates } = useBuildingCreation()
 
   if (!initialLat || !initialLng) {
     return (
@@ -66,7 +67,15 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
         throw new Error(result.error || 'Failed to create building')
       }
 
-      refreshBuildings()
+      try {
+        const mapBuilding = transformApiBuildingToMapBuilding(result.data)
+        addNewBuilding(mapBuilding)
+      } catch {
+        addNewBuilding({
+          ...result.data,
+          coordinates: [result.data.latitude, result.data.longitude],
+        } as any)
+      }
       onSuccess()
     } catch (err) {
       console.error('Error creating building:', err)

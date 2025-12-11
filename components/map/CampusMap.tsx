@@ -83,8 +83,8 @@ export default function CampusMap({
   const [isMounted, setIsMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const graphRef = useRef<RouteGraph | null>(new RouteGraph())
-  const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
-  const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, buildingsRefreshTrigger } = useBuildingCreation()
+  const { isCreating, setClickedCoordinates, openModal, newFeature } = useMarkerCreation()
+  const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, newBuilding } = useBuildingCreation()
   const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
 
   const handleMapClick = useCallback((coordinates: [number, number]) => {
@@ -178,8 +178,8 @@ export default function CampusMap({
       )}
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
-      <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
-      <BuildingsPolygons refreshTrigger={buildingsRefreshTrigger} onBuildingClick={handleBuildingClick} />
+      <AccessibilityMarkers newFeature={newFeature} />
+      <BuildingsPolygons newBuilding={newBuilding} onBuildingClick={handleBuildingClick} />
     </MapContainer>
   )
 }

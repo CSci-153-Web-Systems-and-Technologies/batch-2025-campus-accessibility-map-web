@@ -52,21 +52,29 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [commentText, setCommentText] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [user, setUser] = useState<User | null>(null)
+  const [userProfile, setUserProfile] = useState<{ display_name?: string | null; avatar_url?: string | null } | null>(null)
   const [selectedComment, setSelectedComment] = useState<CommentWithUser | null>(null)
+  const [localFeature, setLocalFeature] = useState(feature)
   const [isEditingFeature, setIsEditingFeature] = useState(false)
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
   const [editFeatureData, setEditFeatureData] = useState({
     title: feature.title,
     description: feature.description || '',
     feature_type: feature.feature_type,
   })
-  const [editCommentContent, setEditCommentContent] = useState('')
   const [isSavingFeature, setIsSavingFeature] = useState(false)
-  const [isSavingComment, setIsSavingComment] = useState(false)
   const [isDeletingFeature, setIsDeletingFeature] = useState(false)
-  const [isDeletingComment, setIsDeletingComment] = useState(false)
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+  }, [])
+  const [editCommentContent, setEditCommentContent] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [isSavingComment, setIsSavingComment] = useState(false)
   const [isReportingComment, setIsReportingComment] = useState(false)
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+  const [isDeletingComment, setIsDeletingComment] = useState(false)
   const [showReportCommentModal, setShowReportCommentModal] = useState(false)
   const [showReportFeatureModal, setShowReportFeatureModal] = useState(false)
   const [isReportingFeature, setIsReportingFeature] = useState(false)
@@ -74,24 +82,40 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [newPhotoPreviews, setNewPhotoPreviews] = useState<string[]>([])
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([])
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false)
+  const [localPhotos, setLocalPhotos] = useState(feature.photos || [])
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null)
   const { closeModal } = useFeatureModal()
-
   useEffect(() => {
+    if (!user) return
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-  }, [])
+
+    let mounted = true
+    ;(async () => {
+      try {
+        const { data: profileData, error } = await supabase
+          .from('user_profiles')
+          .select('display_name, avatar_url')
+          .eq('id', user.id)
+          .single()
+
+        if (!error && profileData && mounted) {
+          setUserProfile({ display_name: profileData.display_name, avatar_url: profileData.avatar_url })
+        }
+      } catch (e) {}
+    })()
+
+    return () => { mounted = false }
+  }, [user])
 
   useEffect(() => {
-    if (feature.building_id) {
+    // use localFeature so optimistic updates to the feature are reflected in the modal
+    if (localFeature.building_id) {
       setIsLoadingBuilding(true)
       const abortController = new AbortController()
 
       async function fetchBuilding() {
         const { data, error } = await safeFetch<DBBuilding>(
-          `/api/buildings/${feature.building_id}`,
+          `/api/buildings/${localFeature.building_id}`,
           { signal: abortController.signal }
         )
 
@@ -107,7 +131,18 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         abortController.abort()
       }
     }
-  }, [feature.building_id])
+  }, [localFeature.building_id])
+
+
+  // keep localFeature in sync when the parent prop changes
+  useEffect(() => {
+    setLocalFeature(feature)
+  }, [feature])
+
+  useEffect(() => {
+    // keep a local copy of photos so we can update optimistically
+    setLocalPhotos(localFeature.photos || [])
+  }, [localFeature.photos])
 
   useEffect(() => {
     setIsLoadingComments(true)
@@ -156,6 +191,76 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     }
   }, [feature.id])
 
+  // helpers to update comments list
+  const addOrUpdateComment = useCallback((comment: CommentWithUser) => {
+    setComments(prev => {
+      const idx = prev.findIndex(c => c.id === comment.id)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = comment
+        return next
+      }
+      return [comment, ...prev]
+    })
+  }, [])
+
+  const removeCommentById = useCallback((commentId: string) => {
+    setComments(prev => prev.filter(c => c.id !== commentId))
+  }, [])
+
+  // subscribe to realtime changes for comments, photos and likes for this feature
+  useEffect(() => {
+    if (!feature.id) return
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel(`feature_${feature.id}_changes`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feature_comments', filter: `feature_id=eq.${feature.id}` }, async (payload) => {
+        try {
+          const { data, error } = await safeFetch<CommentWithUser>(`/api/features/${feature.id}/comments/${payload.new.id}`)
+          if (!error && data) addOrUpdateComment(data)
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'feature_comments', filter: `feature_id=eq.${feature.id}` }, async (payload) => {
+        try {
+          const { data, error } = await safeFetch<CommentWithUser>(`/api/features/${feature.id}/comments/${payload.new.id}`)
+          if (!error && data) addOrUpdateComment(data)
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'feature_comments', filter: `feature_id=eq.${feature.id}` }, (payload) => {
+        try { removeCommentById(payload.old.id as string) } catch {}
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feature_photos', filter: `feature_id=eq.${feature.id}` }, async () => {
+        try {
+          const { data, error } = await safeFetch<AccessibilityFeature>(`/api/features/${feature.id}`)
+          if (!error && data) setLocalPhotos(data.photos || [])
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'feature_photos', filter: `feature_id=eq.${feature.id}` }, async () => {
+        try {
+          const { data, error } = await safeFetch<AccessibilityFeature>(`/api/features/${feature.id}`)
+          if (!error && data) setLocalPhotos(data.photos || [])
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'feature_photos', filter: `feature_id=eq.${feature.id}` }, async () => {
+        try {
+          const { data, error } = await safeFetch<AccessibilityFeature>(`/api/features/${feature.id}`)
+          if (!error && data) setLocalPhotos(data.photos || [])
+        } catch {}
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'feature_likes', filter: `feature_id=eq.${feature.id}` }, async () => {
+        try {
+          const { data, error } = await safeFetch<LikeData>(`/api/features/${feature.id}/likes`)
+          if (!error && data) setLikeData(data)
+        } catch {}
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [feature.id, addOrUpdateComment, removeCommentById])
+
   const handleLike = useCallback(async () => {
     if (!user || isLiking || likeData.user_liked) return
 
@@ -166,7 +271,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to submit comment (HTTP ${response.status})`)
       }
 
       const result = await response.json()
@@ -190,26 +296,26 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const handleEditFeature = useCallback(() => {
     setIsEditingFeature(true)
     setEditFeatureData({
-      title: feature.title,
-      description: feature.description || '',
-      feature_type: feature.feature_type,
+      title: localFeature.title,
+      description: localFeature.description || '',
+      feature_type: localFeature.feature_type,
     })
     setNewPhotos([])
     setNewPhotoPreviews([])
     setPhotosToDelete([])
-  }, [feature])
+  }, [localFeature])
 
   const handleCancelEditFeature = useCallback(() => {
     setIsEditingFeature(false)
     setEditFeatureData({
-      title: feature.title,
-      description: feature.description || '',
-      feature_type: feature.feature_type,
+      title: localFeature.title,
+      description: localFeature.description || '',
+      feature_type: localFeature.feature_type,
     })
     setNewPhotos([])
     setNewPhotoPreviews([])
     setPhotosToDelete([])
-  }, [feature])
+  }, [localFeature])
 
   const handlePhotoChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -257,6 +363,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         throw new Error('Failed to update feature')
       }
 
+      // optimistic update: show edited title/description immediately in modal
+      try {
+        setLocalFeature(prev => ({ ...(prev || {}), ...editFeatureData }))
+      } catch {}
+
       const uploadErrors: string[] = []
       const { deleteFeaturePhoto, uploadFeaturePhoto } = await import('@/lib/utils/photo-handler')
 
@@ -270,7 +381,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       }
 
       if (newPhotos.length > 0) {
-        const remainingPhotos = feature.photos?.filter(p => !photosToDelete.includes(p.id)) || []
+        const remainingPhotos = localPhotos?.filter(p => !photosToDelete.includes(p.id)) || []
         const hasPrimaryPhoto = remainingPhotos.some(p => p.is_primary)
         const shouldSetPrimary = !hasPrimaryPhoto && newPhotos.length > 0
         
@@ -288,7 +399,14 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       }
 
       setIsEditingFeature(false)
-      window.location.reload()
+      // refresh photos for this feature (authoritative)
+      try {
+        const { data: featureData, error: featureError } = await safeFetch<AccessibilityFeature>(`/api/features/${feature.id}`)
+        if (!featureError && featureData) {
+          setLocalPhotos(featureData.photos || [])
+          setLocalFeature(featureData)
+        }
+      } catch {}
     } catch (error) {
       console.error('Error updating feature:', error)
       alert('Failed to update feature. Please try again.')
@@ -296,7 +414,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       setIsSavingFeature(false)
       setIsUploadingPhotos(false)
     }
-  }, [feature.id, editFeatureData, isFeatureOwner, isSavingFeature, isUploadingPhotos, newPhotos, photosToDelete, feature.photos])
+  }, [feature.id, editFeatureData, isFeatureOwner, isSavingFeature, isUploadingPhotos, newPhotos, photosToDelete, localPhotos])
 
   const handleDeleteFeature = useCallback(async () => {
     if (!isFeatureOwner || isDeletingFeature) return
@@ -311,8 +429,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         throw new Error('Failed to delete feature')
       }
 
+      // close modal and rely on realtime subscriptions to remove the feature from the map
       closeModal()
-      window.location.reload()
     } catch (error) {
       console.error('Error deleting feature:', error)
       alert('Failed to delete feature. Please try again.')
@@ -347,32 +465,16 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
       const result = await response.json()
       if (result.data) {
+        // update the single comment in local state and preserve/augment profile info
+        const updated: CommentWithUser = result.data
+        setComments(prev => prev.map(c => c.id === updated.id ? {
+          ...c,
+          ...updated,
+          user_display_name: updated.user_display_name ?? c.user_display_name ?? userProfile?.display_name ?? null,
+          user_avatar_url: updated.user_avatar_url ?? c.user_avatar_url ?? userProfile?.avatar_url ?? null,
+        } : c))
         setEditingCommentId(null)
         setEditCommentContent('')
-        
-        const abortController = new AbortController()
-        const { data: commentsData, error: commentsError } = await safeFetch<CommentWithUser[]>(
-          `/api/features/${feature.id}/comments`,
-          { signal: abortController.signal }
-        )
-
-        if (!commentsError && commentsData) {
-          const flatComments: CommentWithUser[] = []
-          function flattenComments(comments: CommentWithReplies[]) {
-            comments.forEach(comment => {
-              flatComments.push({
-                ...comment,
-                user_display_name: comment.user_display_name || null,
-                user_avatar_url: comment.user_avatar_url || null,
-              })
-              if (comment.replies && comment.replies.length > 0) {
-                flattenComments(comment.replies)
-              }
-            })
-          }
-          flattenComments(commentsData as CommentWithReplies[])
-          setComments(flatComments)
-        }
       }
     } catch (error) {
       console.error('Error updating comment:', error)
@@ -495,30 +597,18 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
       if (data) {
         setCommentText('')
-        
-        const abortController = new AbortController()
-        const { data: commentsData, error: commentsError } = await safeFetch<CommentWithUser[]>(
-          `/api/features/${feature.id}/comments`,
-          { signal: abortController.signal }
-        )
-
-        if (!commentsError && commentsData) {
-          const flatComments: CommentWithUser[] = []
-          function flattenComments(comments: CommentWithReplies[]) {
-            comments.forEach(comment => {
-              flatComments.push({
-                ...comment,
-                user_display_name: comment.user_display_name || null,
-                user_avatar_url: comment.user_avatar_url || null,
-              })
-              if (comment.replies && comment.replies.length > 0) {
-                flattenComments(comment.replies)
-              }
-            })
+        // Optimistically add the created comment to local state if server returned it
+        try {
+          const created: CommentWithUser | undefined = result.data
+          if (created) {
+            const enriched: CommentWithUser = {
+              ...created,
+              user_display_name: created.user_display_name ?? userProfile?.display_name ?? null,
+              user_avatar_url: created.user_avatar_url ?? userProfile?.avatar_url ?? null,
+            }
+            setComments(prev => [enriched, ...prev])
           }
-          flattenComments(commentsData as CommentWithReplies[])
-          setComments(flatComments)
-        }
+        } catch (e) {}
       }
     } catch (error) {
       console.error('Error submitting comment:', error)
@@ -527,8 +617,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     }
   }, [user, feature.id, commentText, isSubmittingComment])
 
-  const firstPhoto = feature.photos && feature.photos.length > 0
-    ? feature.photos[0]
+  const firstPhoto = localPhotos && localPhotos.length > 0
+    ? localPhotos[0]
     : null
 
   return (
@@ -608,7 +698,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             {firstPhoto ? (
               <FeaturePhoto
                 photoUrl={firstPhoto.full_url || firstPhoto.photo_url}
-                alt={feature.title}
+                alt={localFeature.title}
                 className="w-full h-full"
                 height="100%"
                 objectFit="cover"
@@ -685,15 +775,15 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                     Photos
                   </Label>
                   
-                  {(feature.photos && feature.photos.length > 0) && (
+                  {(localPhotos && localPhotos.length > 0) && (
                     <div className="grid grid-cols-3 gap-2">
-                      {feature.photos
+                      {localPhotos
                         .filter(photo => !photosToDelete.includes(photo.id))
                         .map((photo) => (
                           <div key={photo.id} className="relative group">
-                            <img
+                              <img
                               src={photo.full_url || photo.photo_url}
-                              alt="Feature photo"
+                              alt={localFeature.title}
                               className="w-full h-24 object-cover rounded border-4 border-m3-outline"
                             />
                             <button
@@ -770,10 +860,10 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
             ) : (
               <div>
                 <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 mt-8 md:mt-10 text-m3-primary leading-tight">
-                  {feature.title}
+                  {localFeature.title}
                 </h1>
                 <FeatureTypeBadge 
-                  featureType={feature.feature_type} 
+                  featureType={localFeature.feature_type} 
                   size="md"
                 />
               </div>
@@ -793,14 +883,14 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
               </div>
             )}
 
-            {feature.description && (
+            {localFeature.description && (
               <div className="pt-2 md:pt-3">
                 <div className="bg-m3-tertiary-container border rounded-xl p-4 md:p-5 shadow-sm">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 md:mb-3">
                     Description
                   </h3>
                   <p className="text-sm md:text-base text-foreground leading-relaxed">
-                    {feature.description}
+                    {localFeature.description}
                   </p>
                 </div>
               </div>
