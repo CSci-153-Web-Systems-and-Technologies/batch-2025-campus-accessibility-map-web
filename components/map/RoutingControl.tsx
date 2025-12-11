@@ -13,16 +13,17 @@ interface RoutingControlProps {
   targetNodeId: string | null;
   targetLocation: { lat: number; lng: number } | null;
   onRouteCalculated?: (distance?: number, hasStairs?: boolean) => void;
+  routePreference?: 'avoid_stairs' | 'no_preference'
 }
 
-/** Handles user location placement and route calculation */
 export function RoutingControl({ 
   graphRef, 
   isSettingLocation, 
   onLocationSet,
   targetNodeId,
   targetLocation,
-  onRouteCalculated
+  onRouteCalculated,
+  routePreference = 'avoid_stairs',
 }: RoutingControlProps) {
   const map = useMap();
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
@@ -42,7 +43,7 @@ export function RoutingControl({
 
       const icon = L.divIcon({
         className: 'user-location-marker',
-        html: `<div style="width: 24px; height: 24px; background-color: hsl(var(--m3-primary)); border: 4px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.4);"></div>`,
+        html: `<div class="user-location-loader"></div>`,
         iconSize: [24, 24],
         iconAnchor: [12, 12],
       });
@@ -92,10 +93,13 @@ export function RoutingControl({
       return;
     }
     
+    // Prefer avoiding stairs by default; if user prefers no preference, lower multiplier to 1.0
+    const stairsPenalty = routePreference === 'no_preference' ? 1.0 : 10.0
+
     const result = dijkstra(graphRef.current, startNode.id, finalTargetNodeId, [
-      { tag: 'has_stairs', multiplier: 10.0 }
+      { tag: 'has_stairs', multiplier: stairsPenalty }
     ]);
-    
+
     if (!result) {
       console.error('No route found');
       alert('No accessible route found to this location');
@@ -104,10 +108,20 @@ export function RoutingControl({
 
     const hasStairs = result.nodes.some(node => node.tags.includes('has_stairs'));
     if (hasStairs) {
-      alert('⚠️ This route includes stairs. No stair-free path was found.');
+      if (routePreference !== 'no_preference') {
+        alert('⚠️ This route includes stairs. No stair-free path was found.');
+      }
     }
 
     const routeCoords = [userLocation, ...result.nodes.map(node => node.latlng)];
+    let finalTargetLatLng: L.LatLng | null = null
+    if (targetLocation) {
+      finalTargetLatLng = L.latLng(targetLocation.lat, targetLocation.lng)
+      const lastNodeLatLng = routeCoords[routeCoords.length - 1]
+      if (finalTargetLatLng.distanceTo(lastNodeLatLng) > 1) {
+        routeCoords.push(finalTargetLatLng)
+      }
+    }
     
     const routeLine = L.polyline(routeCoords, {
       color: 'hsl(var(--m3-tertiary))',
@@ -126,7 +140,7 @@ export function RoutingControl({
     }
 
     onRouteCalculated?.(totalDistance, hasStairs);
-  }, [userLocation, targetNodeId, targetLocation, graphRef, map]);
+  }, [userLocation, targetNodeId, targetLocation, graphRef, map, routePreference]);
 
   useEffect(() => {
     return () => {
