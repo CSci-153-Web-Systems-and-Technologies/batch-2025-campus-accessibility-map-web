@@ -34,6 +34,7 @@ function getMarkerIcon(featureType: FeatureType) {
 }
 
 import { createClient } from '@/lib/supabase/client'
+import { useRealtimeTable } from '@/lib/hooks/useRealtimeTable'
 
 export function AccessibilityMarkers({ newFeature }: AccessibilityMarkersProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
@@ -120,36 +121,23 @@ export function AccessibilityMarkers({ newFeature }: AccessibilityMarkersProps) 
     }
   }, [newFeature, addOrUpdateFeature])
 
-  useEffect(() => {
-    const supabase = createClient()
-
-    const channel = supabase
-      .channel('accessibility_features_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'accessibility_features' }, async (payload) => {
-        try {
-          const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
-          if (!error && data) {
-            addOrUpdateFeature(transformApiFeatureToMapFeature(data))
-          }
-        } catch {}
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'accessibility_features' }, async (payload) => {
-        try {
-          const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
-          if (!error && data) {
-            addOrUpdateFeature(transformApiFeatureToMapFeature(data))
-          }
-        } catch {}
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'accessibility_features' }, (payload) => {
-        removeFeature(payload.old.id as string)
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+  useRealtimeTable('accessibility_features', null, {
+    onInsert: async (payload) => {
+      try {
+        const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
+        if (!error && data) addOrUpdateFeature(transformApiFeatureToMapFeature(data))
+      } catch {}
+    },
+    onUpdate: async (payload) => {
+      try {
+        const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
+        if (!error && data) addOrUpdateFeature(transformApiFeatureToMapFeature(data))
+      } catch {}
+    },
+    onDelete: (payload) => {
+      try { removeFeature(payload.old.id as string) } catch {}
     }
-  }, [addOrUpdateFeature, removeFeature])
+  })
 
   const visibleFeatures = useMemo(() => {
     return features.filter(feature => isFeatureTypeEnabled(feature.feature_type))

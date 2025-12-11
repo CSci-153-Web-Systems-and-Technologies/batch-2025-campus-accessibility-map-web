@@ -45,6 +45,7 @@ function createBuildingPolygon(centerLat: number, centerLng: number, size: numbe
 }
 
 import { createClient } from '@/lib/supabase/client'
+import { useRealtimeTable } from '@/lib/hooks/useRealtimeTable'
 
 export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPolygonsProps) {
   const [buildings, setBuildings] = useState<Building[]>([])
@@ -121,28 +122,23 @@ export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPol
     }
   }, [newBuilding, addOrUpdateBuilding])
 
-  useEffect(() => {
-    const supabase = createClient()
-
-    const channel = supabase
-      .channel('buildings_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'buildings' }, async (payload) => {
+  useRealtimeTable('buildings', null, {
+    onInsert: async (payload) => {
+      try {
         const { data } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
         if (data) addOrUpdateBuilding(transformApiBuildingToMapBuilding(data))
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'buildings' }, async (payload) => {
+      } catch {}
+    },
+    onUpdate: async (payload) => {
+      try {
         const { data } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
         if (data) addOrUpdateBuilding(transformApiBuildingToMapBuilding(data))
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'buildings' }, (payload) => {
-        removeBuilding(payload.old.id as string)
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
+      } catch {}
+    },
+    onDelete: (payload) => {
+      try { removeBuilding(payload.old.id as string) } catch {}
     }
-  }, [addOrUpdateBuilding, removeBuilding])
+  })
 
   if (isLoading || error) {
     return null

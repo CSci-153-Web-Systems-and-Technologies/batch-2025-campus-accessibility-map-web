@@ -61,6 +61,8 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     description: feature.description || '',
     feature_type: feature.feature_type,
   })
+  const [isSavingFeature, setIsSavingFeature] = useState(false)
+  const [isDeletingFeature, setIsDeletingFeature] = useState(false)
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -68,8 +70,11 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
     })
   }, [])
   const [editCommentContent, setEditCommentContent] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [isSavingComment, setIsSavingComment] = useState(false)
   const [isReportingComment, setIsReportingComment] = useState(false)
   const [reportingCommentId, setReportingCommentId] = useState<string | null>(null)
+  const [isDeletingComment, setIsDeletingComment] = useState(false)
   const [showReportCommentModal, setShowReportCommentModal] = useState(false)
   const [showReportFeatureModal, setShowReportFeatureModal] = useState(false)
   const [isReportingFeature, setIsReportingFeature] = useState(false)
