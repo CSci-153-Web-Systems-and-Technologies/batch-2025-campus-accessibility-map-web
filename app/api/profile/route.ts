@@ -55,9 +55,9 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { firstName, lastName } = body
+    const { firstName, lastName, routePreference, route_preference } = body
 
-    if (firstName === undefined && lastName === undefined) {
+    if (firstName === undefined && lastName === undefined && routePreference === undefined && route_preference === undefined) {
       return NextResponse.json(
         { error: 'No fields to update' },
         { status: 400 }
@@ -66,12 +66,20 @@ export async function PATCH(request: Request) {
 
     const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || null
 
+    const rawPref = route_preference ?? routePreference
+    const allowedPrefs = ['avoid_stairs', 'no_preference']
+    const pref = typeof rawPref === 'string' && allowedPrefs.includes(rawPref) ? rawPref : undefined
+
+    const upsertRow: any = {
+      id: user.id,
+      display_name: displayName,
+    }
+
+    if (pref) upsertRow.route_preference = pref
+
     const { data, error: updateError } = await supabase
       .from('user_profiles')
-      .upsert({
-        id: user.id,
-        display_name: displayName,
-      }, {
+      .upsert(upsertRow, {
         onConflict: 'id'
       })
       .select()

@@ -16,6 +16,7 @@ import { RouteDrawingControl } from './RouteDrawingControl'
 import { RouteLoader } from './RouteLoader'
 import { RoutingControl } from './RoutingControl'
 import { RouteGraph } from '@/lib/routing/RouteGraph'
+import { safeFetch } from '@/lib/fetch-utils'
 import type { Building } from '@/types/map'
 import type L from 'leaflet'
 
@@ -61,7 +62,6 @@ function MapResizeHandler() {
       window.removeEventListener('orientationchange', handleOrientationChange)
     }
   }, [map])
-
   return null
 }
 
@@ -83,6 +83,53 @@ export default function CampusMap({
   const [isMounted, setIsMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const graphRef = useRef<RouteGraph | null>(new RouteGraph())
+  const [routePreference, setRoutePreference] = useState<'avoid_stairs' | 'no_preference'>('avoid_stairs')
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        type ProfileResp = { profile: import('@/types/database').UserProfile | null }
+        const { data, error } = await safeFetch<ProfileResp>('/api/profile')
+        if (!error && mounted && data?.profile) {
+          const profile = data.profile
+          const asRecord = profile as unknown as Record<string, unknown>
+          const rawPref = typeof asRecord.route_preference === 'string'
+            ? asRecord.route_preference
+            : typeof asRecord.routePreference === 'string'
+            ? asRecord.routePreference
+            : undefined
+
+          if (rawPref === 'no_preference') {
+            setRoutePreference('no_preference')
+          } else {
+            setRoutePreference('avoid_stairs')
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  // Listen for profile updates dispatched elsewhere (settings page)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent)?.detail as Record<string, unknown> | undefined
+        const rawPref = detail?.route_preference ?? detail?.routePreference
+        if (typeof rawPref === 'string') {
+          if (rawPref === 'no_preference') setRoutePreference('no_preference')
+          else setRoutePreference('avoid_stairs')
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('profile-updated', handler as EventListener)
+    return () => window.removeEventListener('profile-updated', handler as EventListener)
+  }, [])
   const { isCreating, setClickedCoordinates, openModal, newFeature } = useMarkerCreation()
   const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, newBuilding } = useBuildingCreation()
   const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
@@ -174,6 +221,7 @@ export default function CampusMap({
           targetNodeId={targetNodeId ?? null}
           targetLocation={targetLocation ?? null}
           onRouteCalculated={onRouteCalculated}
+          routePreference={routePreference}
         />
       )}
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />

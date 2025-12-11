@@ -17,6 +17,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [routePreference, setRoutePreference] = useState<'avoid_stairs' | 'no_preference'>('avoid_stairs')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -56,6 +57,7 @@ export default function SettingsPage() {
             setLastName('')
           }
         }
+        setRoutePreference((data.profile as any)?.route_preference || 'avoid_stairs')
       }
 
       setIsLoading(false)
@@ -77,6 +79,8 @@ export default function SettingsPage() {
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          routePreference: routePreference,
+          route_preference: routePreference,
         }),
       })
 
@@ -88,6 +92,12 @@ export default function SettingsPage() {
 
       setSaveMessage({ type: 'success', text: 'Profile updated successfully' })
       setProfile(result.data.profile)
+      // Notify other parts of the app that profile changed
+      try {
+        const detail = { route_preference: result.data.profile?.route_preference ?? routePreference }
+        window.dispatchEvent(new CustomEvent('profile-updated', { detail }))
+      } catch (e) {
+      }
       
       setTimeout(() => setSaveMessage(null), 3000)
     } catch (error) {
@@ -277,6 +287,37 @@ export default function SettingsPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Last name"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-m3-on-surface">Route Preference</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="route-avoid"
+                    name="routePreference"
+                    type="radio"
+                    value="avoid_stairs"
+                    checked={routePreference === 'avoid_stairs'}
+                    onChange={(e) => setRoutePreference(e.target.value as any)}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="route-avoid" className="text-sm text-m3-on-surface">Prefer routes that avoid stairs</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="route-none"
+                    name="routePreference"
+                    type="radio"
+                    value="no_preference"
+                    checked={routePreference === 'no_preference'}
+                    onChange={(e) => setRoutePreference(e.target.value as any)}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="route-none" className="text-sm text-m3-on-surface">No preference (allow stairs)</label>
+                </div>
+                <p className="text-xs text-m3-on-surface-variant">Default routing currently prefers avoiding stairs; change here to allow stairs.</p>
               </div>
             </div>
 

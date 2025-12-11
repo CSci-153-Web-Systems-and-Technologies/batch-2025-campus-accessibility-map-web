@@ -66,6 +66,7 @@ export interface FeatureLike {
 export interface UserProfile {
   id: string
   display_name: string | null
+  route_preference?: 'avoid_stairs' | 'no_preference'
   bio: string | null
   avatar_url: string | null
   notification_preferences: {
