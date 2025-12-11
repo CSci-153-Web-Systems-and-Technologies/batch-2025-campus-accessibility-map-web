@@ -262,7 +262,7 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   }, [feature.id, addOrUpdateComment, removeCommentById])
 
   const handleLike = useCallback(async () => {
-    if (!user || isLiking || likeData.user_liked) return
+    if (!user || isLiking) return
 
     setIsLiking(true)
     try {
@@ -713,15 +713,15 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 e.stopPropagation()
                 handleLike()
               }}
-              disabled={!user || isLiking || likeData.user_liked}
+              disabled={!user || isLiking}
               className={`absolute top-3 left-3 md:top-4 md:left-4 w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-xl transition-all z-10 ${
                 likeData.user_liked
-                  ? 'bg-red-500 text-white opacity-80 cursor-not-allowed'
+                  ? 'bg-red-500 text-white opacity-95'
                   : user
                   ? 'bg-m3-surface text-m3-on-surface hover:bg-m3-surface-bright hover:scale-110 active:scale-95'
                   : 'bg-m3-surface-dim text-m3-on-surface-variant cursor-not-allowed'
               } ${isLiking ? 'opacity-50 cursor-wait' : ''}`}
-              title={likeData.user_liked ? 'You already liked this' : 'Like this feature'}
+              title={likeData.user_liked ? 'Unlike this feature' : 'Like this feature'}
             >
               <FaHeart className={`w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 ${likeData.user_liked ? 'fill-current' : ''}`} />
               {likeData.count > 0 && (
