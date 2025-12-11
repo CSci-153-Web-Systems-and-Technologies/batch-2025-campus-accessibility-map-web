@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { FeatureType } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { useMarkerCreation } from './MarkerCreationContext'
+import { transformApiFeatureToMapFeature } from '@/lib/utils/feature-transform'
 
 interface MarkerCreationFormProps {
   onSuccess: () => void
@@ -24,7 +25,7 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { refreshMarkers, selectedBuildingId } = useMarkerCreation()
+  const { addNewFeature, selectedBuildingId } = useMarkerCreation()
 
   if (!initialLat || !initialLng) {
     return (
@@ -96,7 +97,16 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
         }
       }
 
-      refreshMarkers()
+      try {
+        const mapFeature = transformApiFeatureToMapFeature(result.data as any)
+        addNewFeature(mapFeature)
+      } catch {
+        addNewFeature({
+          ...result.data,
+          coordinates: [result.data.latitude, result.data.longitude],
+          photos: [],
+        } as any)
+      }
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

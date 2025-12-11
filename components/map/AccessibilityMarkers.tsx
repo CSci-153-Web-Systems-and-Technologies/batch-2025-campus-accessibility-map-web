@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Marker, useMap } from 'react-leaflet'
 import type { LeafletMouseEvent } from 'leaflet'
 import { HiLocationMarker } from 'react-icons/hi'
@@ -19,7 +19,7 @@ import { useBuildingModal } from './BuildingModalContext'
 import { getFeatureColor } from '@/lib/utils/feature-colors'
 
 interface AccessibilityMarkersProps {
-  refreshTrigger?: number
+  newFeature?: AccessibilityFeature | null
 }
 
 function getMarkerIcon(featureType: FeatureType) {
@@ -33,7 +33,9 @@ function getMarkerIcon(featureType: FeatureType) {
   })
 }
 
-export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersProps) {
+import { createClient } from '@/lib/supabase/client'
+
+export function AccessibilityMarkers({ newFeature }: AccessibilityMarkersProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -49,6 +51,22 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
       cache.set(type, getMarkerIcon(type))
     })
     return cache
+  }, [])
+
+  const addOrUpdateFeature = useCallback((newItem: AccessibilityFeature) => {
+    setFeatures(prev => {
+      const idx = prev.findIndex(f => f.id === newItem.id)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = newItem
+        return next
+      }
+      return [...prev, newItem]
+    })
+  }, [])
+
+  const removeFeature = useCallback((featureId: string) => {
+    setFeatures(prev => prev.filter(f => f.id !== featureId))
   }, [])
 
   useEffect(() => {
@@ -94,7 +112,44 @@ export function AccessibilityMarkers({ refreshTrigger }: AccessibilityMarkersPro
     return () => {
       abortController.abort()
     }
-  }, [refreshTrigger])
+  }, [])
+
+  useEffect(() => {
+    if (newFeature) {
+      addOrUpdateFeature(newFeature)
+    }
+  }, [newFeature, addOrUpdateFeature])
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel('accessibility_features_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'accessibility_features' }, async (payload) => {
+        try {
+          const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
+          if (!error && data) {
+            addOrUpdateFeature(transformApiFeatureToMapFeature(data))
+          }
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'accessibility_features' }, async (payload) => {
+        try {
+          const { data, error } = await safeFetch<ApiFeatureWithPhotos>(`/api/features/${payload.new.id}`)
+          if (!error && data) {
+            addOrUpdateFeature(transformApiFeatureToMapFeature(data))
+          }
+        } catch {}
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'accessibility_features' }, (payload) => {
+        removeFeature(payload.old.id as string)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [addOrUpdateFeature, removeFeature])
 
   const visibleFeatures = useMemo(() => {
     return features.filter(feature => isFeatureTypeEnabled(feature.feature_type))

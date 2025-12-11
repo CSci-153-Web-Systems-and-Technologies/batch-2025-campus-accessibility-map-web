@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import type { LatLng } from '@/types/map'
 
+import type { AccessibilityFeature } from '@/types/map'
+
 interface MarkerCreationContextType {
   isCreating: boolean
   setCreating: (creating: boolean) => void
@@ -13,8 +15,8 @@ interface MarkerCreationContextType {
   openModal: () => void
   closeModal: () => void
   isModalOpen: boolean
-  refreshMarkers: () => void
-  markersRefreshTrigger: number
+  addNewFeature: (feature: AccessibilityFeature) => void
+  newFeature: AccessibilityFeature | null
 }
 
 const MarkerCreationContext = createContext<MarkerCreationContextType | undefined>(undefined)
@@ -24,7 +26,7 @@ export function MarkerCreationProvider({ children }: { children: ReactNode }) {
   const [clickedCoordinates, setClickedCoordinates] = useState<LatLng | null>(null)
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [markersRefreshTrigger, setMarkersRefreshTrigger] = useState(0)
+  const [newFeature, setNewFeature] = useState<AccessibilityFeature | null>(null)
 
   const openModal = useCallback(() => {
     setIsModalOpen(true)
@@ -38,8 +40,9 @@ export function MarkerCreationProvider({ children }: { children: ReactNode }) {
     setIsCreating(false)
   }, [])
 
-  const refreshMarkers = useCallback(() => {
-    setMarkersRefreshTrigger(prev => prev + 1)
+  const addNewFeature = useCallback((feature: AccessibilityFeature) => {
+    setNewFeature(feature)
+    setTimeout(() => setNewFeature(null), 100)
   }, [])
 
   return (
@@ -53,8 +56,8 @@ export function MarkerCreationProvider({ children }: { children: ReactNode }) {
       openModal,
       closeModal,
       isModalOpen,
-      refreshMarkers,
-      markersRefreshTrigger,
+      addNewFeature,
+      newFeature,
     }}>
       {children}
     </MarkerCreationContext.Provider>

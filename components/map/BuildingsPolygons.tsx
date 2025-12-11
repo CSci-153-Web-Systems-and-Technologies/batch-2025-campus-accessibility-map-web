@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useState, useCallback, type ReactElement } from 'react'
 import { Polygon } from 'react-leaflet'
 import type { Building } from '@/types/map'
 import { useBuildingModal } from './BuildingModalContext'
@@ -13,7 +13,7 @@ import { transformApiBuildingToMapBuilding } from '@/lib/utils/building-transfor
 import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 
 interface BuildingsPolygonsProps {
-  refreshTrigger?: number
+  newBuilding?: Building | null
   onBuildingClick?: (building: Building, event?: { latlng?: { lat: number, lng: number }, screenPoint?: { x: number, y: number } }) => void
 }
 
@@ -44,7 +44,9 @@ function createBuildingPolygon(centerLat: number, centerLng: number, size: numbe
   ]
 }
 
-export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: BuildingsPolygonsProps) {
+import { createClient } from '@/lib/supabase/client'
+
+export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPolygonsProps) {
   const [buildings, setBuildings] = useState<Building[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -60,6 +62,22 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
     setSelectedBuildingId,
     openModal: openMarkerModal 
   } = useMarkerCreation()
+
+  const addOrUpdateBuilding = useCallback((item: Building) => {
+    setBuildings(prev => {
+      const idx = prev.findIndex(b => b.id === item.id)
+      if (idx >= 0) {
+        const next = [...prev]
+        next[idx] = item
+        return next
+      }
+      return [...prev, item]
+    })
+  }, [])
+
+  const removeBuilding = useCallback((buildingId: string) => {
+    setBuildings(prev => prev.filter(b => b.id !== buildingId))
+  }, [])
 
   useEffect(() => {
     const abortController = new AbortController()
@@ -95,7 +113,36 @@ export function BuildingsPolygons({ refreshTrigger, onBuildingClick }: Buildings
     return () => {
       abortController.abort()
     }
-  }, [refreshTrigger])
+  }, [])
+
+  useEffect(() => {
+    if (newBuilding) {
+      addOrUpdateBuilding(newBuilding)
+    }
+  }, [newBuilding, addOrUpdateBuilding])
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    const channel = supabase
+      .channel('buildings_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'buildings' }, async (payload) => {
+        const { data } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
+        if (data) addOrUpdateBuilding(transformApiBuildingToMapBuilding(data))
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'buildings' }, async (payload) => {
+        const { data } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
+        if (data) addOrUpdateBuilding(transformApiBuildingToMapBuilding(data))
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'buildings' }, (payload) => {
+        removeBuilding(payload.old.id as string)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [addOrUpdateBuilding, removeBuilding])
 
   if (isLoading || error) {
     return null
