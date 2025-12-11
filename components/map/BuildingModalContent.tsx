@@ -27,6 +27,7 @@ interface BuildingModalContentProps {
 export function BuildingModalContent({ building }: BuildingModalContentProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedFeatures, setHasLoadedFeatures] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -44,36 +45,44 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
     if (!building.id) return
 
     const abortController = new AbortController()
+    let isActive = true
 
     async function fetchFeatures() {
       setIsLoading(true)
+      setHasLoadedFeatures(false)
       setError(null)
 
-      const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
-        `/api/features?building_id=${building.id}&limit=${DEFAULT_FETCH_LIMIT}`,
-        { signal: abortController.signal }
-      )
+      try {
+        const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
+          `/api/features?building_id=${building.id}&limit=${DEFAULT_FETCH_LIMIT}`,
+          { signal: abortController.signal }
+        )
 
-      if (fetchError) {
-        if (fetchError.name !== 'AbortError') {
-          console.error('Error fetching building features:', fetchError)
-          setError(fetchError.message)
+        if (!isActive) return
+
+        if (fetchError) {
+          if (fetchError.name !== 'AbortError') {
+            console.error('Error fetching building features:', fetchError)
+            setError(fetchError.message)
+          }
+          return
         }
+
+        if (data) {
+          const featuresData: AccessibilityFeature[] = data.map(transformApiFeatureToMapFeature)
+          setFeatures(featuresData)
+        }
+      } finally {
+        if (!isActive) return
         setIsLoading(false)
-        return
+        setHasLoadedFeatures(true)
       }
-
-      if (data) {
-        const featuresData: AccessibilityFeature[] = data.map(transformApiFeatureToMapFeature)
-        setFeatures(featuresData)
-      }
-
-      setIsLoading(false)
     }
 
     fetchFeatures()
 
     return () => {
+      isActive = false
       abortController.abort()
     }
   }, [building.id])
@@ -310,9 +319,17 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0 bg-m3-surface">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-muted-foreground">Loading features...</p>
+          {isLoading || !hasLoadedFeatures ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="relative flex animate-pulse gap-3 p-4 md:p-5 border rounded-xl bg-m3-secondary-container min-h-[112px] md:min-h-[128px]">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/5 rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-full rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-4/5 rounded-lg bg-muted/40"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="flex items-center justify-center h-full">
