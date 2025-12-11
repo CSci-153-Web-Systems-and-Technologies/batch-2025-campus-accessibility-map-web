@@ -45,7 +45,8 @@ interface LikeData {
 export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
   const [building, setBuilding] = useState<DBBuilding | null>(null)
   const [comments, setComments] = useState<CommentWithUser[]>([])
-  const [isLoadingComments, setIsLoadingComments] = useState(false)
+  const [isLoadingComments, setIsLoadingComments] = useState(true)
+  const [hasLoadedComments, setHasLoadedComments] = useState(false)
   const [isLoadingBuilding, setIsLoadingBuilding] = useState(false)
   const [likeData, setLikeData] = useState<LikeData>({ count: 0, user_liked: false })
   const [isLiking, setIsLiking] = useState(false)
@@ -146,50 +147,83 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
   useEffect(() => {
     setIsLoadingComments(true)
+    setHasLoadedComments(false)
     const abortController = new AbortController()
+    let isActive = true
 
     async function fetchCommentsAndLikes() {
-      const [commentsResult, likesResult] = await Promise.all([
-        safeFetch<CommentWithUser[]>(
-          `/api/features/${feature.id}/comments`,
-          { signal: abortController.signal }
-        ),
-        safeFetch<LikeData>(
-          `/api/features/${feature.id}/likes`,
-          { signal: abortController.signal }
-        )
-      ])
+      try {
+        console.log('[FeaturePopupContent] fetchCommentsAndLikes:start', { featureId: feature.id })
+        const [commentsResult, likesResult] = await Promise.all([
+          safeFetch<CommentWithUser[]>(
+            `/api/features/${feature.id}/comments`,
+            { signal: abortController.signal }
+          ),
+          safeFetch<LikeData>(
+            `/api/features/${feature.id}/likes`,
+            { signal: abortController.signal }
+          )
+        ])
 
-      if (!commentsResult.error && commentsResult.data) {
-        const flatComments: CommentWithUser[] = []
-        function flattenComments(comments: CommentWithReplies[]) {
-          comments.forEach(comment => {
-            flatComments.push({
-              ...comment,
-              user_display_name: comment.user_display_name || null,
-              user_avatar_url: comment.user_avatar_url || null,
+        if (!isActive) return
+
+        if (!commentsResult.error && commentsResult.data) {
+          const flatComments: CommentWithUser[] = []
+          function flattenComments(comments: CommentWithReplies[]) {
+            comments.forEach(comment => {
+              flatComments.push({
+                ...comment,
+                user_display_name: comment.user_display_name || null,
+                user_avatar_url: comment.user_avatar_url || null,
+              })
+              if (comment.replies && comment.replies.length > 0) {
+                flattenComments(comment.replies)
+              }
             })
-            if (comment.replies && comment.replies.length > 0) {
-              flattenComments(comment.replies)
-            }
-          })
+          }
+          flattenComments(commentsResult.data as CommentWithReplies[])
+          setComments(flatComments)
+          setHasLoadedComments(true)
+          console.log('[FeaturePopupContent] fetchCommentsAndLikes:commentsLoaded', { featureId: feature.id, count: flatComments.length })
         }
-        flattenComments(commentsResult.data as CommentWithReplies[])
-        setComments(flatComments)
-      }
-      setIsLoadingComments(false)
 
-      if (!likesResult.error && likesResult.data) {
-        setLikeData(likesResult.data)
+        if (!likesResult.error && likesResult.data) {
+          setLikeData(likesResult.data)
+        }
+      } catch (error) {
+        // Ignore abort errors
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching comments/likes:', error)
+        }
+      } finally {
+        if (!isActive) return
+        setIsLoadingComments(false)
+        console.log('[FeaturePopupContent] fetchCommentsAndLikes:finally', {
+          featureId: feature.id,
+          isLoadingComments: false,
+          hasLoadedComments: true,
+        })
       }
     }
 
     fetchCommentsAndLikes()
 
     return () => {
+      isActive = false
       abortController.abort()
     }
   }, [feature.id])
+
+  useEffect(() => {
+    console.log('[FeaturePopupContent] commentRenderState', {
+      featureId: feature.id,
+      isLoadingComments,
+      hasLoadedComments,
+      commentCount: comments.length,
+    })
+  }, [feature.id, isLoadingComments, hasLoadedComments, comments.length])
+
+  const isLikesLoading = (!hasLoadedComments || isLoadingComments) || isLiking
 
   // helpers to update comments list
   const addOrUpdateComment = useCallback((comment: CommentWithUser) => {
@@ -708,26 +742,47 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
                 <span>No photo available</span>
               </div>
             )}
+            {isUploadingPhotos && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                <div className="m3-dot-loader">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 handleLike()
               }}
-              disabled={!user || isLiking}
+              disabled={!user || isLikesLoading}
               className={`absolute top-3 left-3 md:top-4 md:left-4 w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-xl transition-all z-10 ${
                 likeData.user_liked
                   ? 'bg-red-500 text-white opacity-95'
                   : user
                   ? 'bg-m3-surface text-m3-on-surface hover:bg-m3-surface-bright hover:scale-110 active:scale-95'
                   : 'bg-m3-surface-dim text-m3-on-surface-variant cursor-not-allowed'
-              } ${isLiking ? 'opacity-50 cursor-wait' : ''}`}
+              } ${isLikesLoading ? 'opacity-50 cursor-wait' : ''}`}
               title={likeData.user_liked ? 'Unlike this feature' : 'Like this feature'}
             >
-              <FaHeart className={`w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 ${likeData.user_liked ? 'fill-current' : ''}`} />
-              {likeData.count > 0 && (
-                <span className="absolute -bottom-1 -right-1 min-w-[20px] md:min-w-[22px] h-5 md:h-6 px-1 md:px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                  {likeData.count}
-                </span>
+              {isLikesLoading ? (
+                <div className="m3-dot-loader">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              ) : (
+                <>
+                  <FaHeart className={`w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 ${likeData.user_liked ? 'fill-current' : ''}`} />
+                  {likeData.count > 0 && (
+                    <span className="absolute -bottom-1 -right-1 min-w-[20px] md:min-w-[22px] h-5 md:h-6 px-1 md:px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      {likeData.count}
+                    </span>
+                  )}
+                </>
               )}
             </button>
           </div>
@@ -907,9 +962,18 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-5 min-h-0 bg-m3-surface">
-          {isLoadingComments ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-muted-foreground">Loading comments...</p>
+          {!hasLoadedComments || isLoadingComments ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="relative flex animate-pulse gap-3 p-4 md:p-5 border rounded-xl bg-m3-secondary-container min-h-[112px] md:min-h-[128px]">
+                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-muted/40 flex-shrink-0"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/5 rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-full rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-4/5 rounded-lg bg-muted/40"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : comments.length === 0 ? (
             <div className="flex items-center justify-center h-full">

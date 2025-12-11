@@ -172,6 +172,73 @@
     animation: expandFromMarker 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
+  .m3-dot-loader {
+    @apply flex items-center justify-center gap-1;
+    height: 1.5rem;
+  }
+
+  .m3-dot-loader span {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--m3-primary));
+    animation: m3-up-down 0.5s ease-in infinite alternate;
+    display: inline-block;
+  }
+
+  .m3-dot-loader span:nth-child(2) {
+    background-color: hsl(var(--m3-primary) / 0.85);
+    animation-delay: 0.16s;
+  }
+
+  .m3-dot-loader span:nth-child(3) {
+    background-color: hsl(var(--m3-primary) / 0.7);
+    animation-delay: 0.32s;
+  }
+
+  .m3-dot-loader span:nth-child(4) {
+    background-color: hsl(var(--m3-primary) / 0.55);
+    animation-delay: 0.48s;
+  }
+
+  .m3-dot-loader-lg {
+    @apply flex items-center justify-center gap-2;
+    height: 3rem;
+  }
+
+  .m3-dot-loader-lg span {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    background-color: hsl(var(--m3-primary));
+    animation: m3-up-down 0.5s ease-in-out infinite alternate;
+    display: inline-block;
+  }
+
+  .m3-dot-loader-lg span:nth-child(2) {
+    background-color: hsl(var(--m3-primary) / 0.85);
+    animation-delay: 0.16s;
+  }
+
+  .m3-dot-loader-lg span:nth-child(3) {
+    background-color: hsl(var(--m3-primary) / 0.7);
+    animation-delay: 0.32s;
+  }
+
+  .m3-dot-loader-lg span:nth-child(4) {
+    background-color: hsl(var(--m3-primary) / 0.55);
+    animation-delay: 0.48s;
+  }
+
+  @keyframes m3-up-down {
+    0% {
+      transform: translateY(-6px);
+    }
+    100% {
+      transform: translateY(6px);
+    }
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
