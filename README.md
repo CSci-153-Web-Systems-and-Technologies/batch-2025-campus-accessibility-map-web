@@ -76,15 +76,6 @@ Before you begin, ensure you have:
 
 4. **Supabase Database Setup**
    
-   The project includes migration files in the `supabase/migrations/` directory. Run these migrations in order:
-
-   ```bash
-   # Using Supabase CLI (recommended)
-   supabase migration up
-   
-   # Or manually run each migration file in your Supabase SQL editor
-   ```
-
    **Key Database Tables:**
    - `buildings` - Campus building information with polygon coordinates
    - `accessibility_features` - Accessibility markers (ramps, elevators, etc.)
@@ -94,6 +85,99 @@ Before you begin, ensure you have:
    - `user_profiles` - User profile information
    - `comment_reports` - Reports on comments
    - `feature_reports` - Reports on features
+
+     CREATE TABLE public.accessibility_features (
+     id            uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     feature_type  public.feature_types NOT NULL,
+     title         text NOT NULL,
+     description   text,
+     latitude      numeric(10, 8) NOT NULL,
+     longitude     numeric(11, 8) NOT NULL,
+     building_id   uuid,
+     created_by    uuid NOT NULL,
+     created_at    timestamptz DEFAULT now() NOT NULL,
+     updated_at    timestamptz DEFAULT now() NOT NULL,
+     deleted_at    timestamptz,
+
+     CREATE TABLE public.buildings (
+     id                   uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     name                 text NOT NULL,
+     description          text,
+     latitude             numeric(10, 8) NOT NULL,
+     longitude            numeric(11, 8) NOT NULL,
+     created_by           uuid NOT NULL,
+     created_at           timestamptz DEFAULT now() NOT NULL,
+     updated_at           timestamptz DEFAULT now() NOT NULL,
+     deleted_at           timestamptz,
+     polygon_coordinates  jsonb,
+     photo_path           text,
+     );
+     
+     CREATE TABLE public.comment_reports (
+     id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     comment_id   uuid NOT NULL,
+     reported_by  uuid NOT NULL,
+     reason       text,
+     created_at   timestamptz DEFAULT now() NOT NULL,
+     resolved_at  timestamptz,
+     resolved_by  uuid,
+     updated_at   timestamptz DEFAULT now() NOT NULL,
+     );
+     
+     CREATE TABLE public.comment_reports (
+     id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     comment_id   uuid NOT NULL,
+     reported_by  uuid NOT NULL,
+     reason       text,
+     created_at   timestamptz DEFAULT now() NOT NULL,
+     resolved_at  timestamptz,
+     resolved_by  uuid,
+     updated_at   timestamptz DEFAULT now() NOT NULL
+     );
+     
+     CREATE TABLE public.feature_likes (
+     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     feature_id  uuid NOT NULL,
+     user_id     uuid NOT NULL,
+     created_at  timestamptz DEFAULT now() NOT NULL,
+     );
+
+     CREATE TABLE public.feature_photos (
+     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     feature_id  uuid NOT NULL,
+     photo_url   text NOT NULL,
+     uploaded_by uuid NOT NULL,
+     created_at  timestamptz DEFAULT now() NOT NULL,
+     deleted_at  timestamptz,
+     );
+     
+     CREATE TABLE public.feature_photos (
+     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     feature_id  uuid NOT NULL,
+     photo_url   text NOT NULL,
+     uploaded_by uuid NOT NULL,
+     created_at  timestamptz DEFAULT now() NOT NULL,
+     deleted_at  timestamptz
+     );
+
+     CREATE TABLE public.route_polylines (
+     id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     coordinates  jsonb NOT NULL,
+     node_tags    jsonb DEFAULT '{}'::jsonb,
+     created_by   uuid NOT NULL,
+     created_at   timestamptz DEFAULT now() NOT NULL,
+     updated_at   timestamptz DEFAULT now() NOT NULL,
+     deleted_at   timestamptz,
+     );
+   
+     CREATE TABLE public.user_profiles (
+     id                uuid PRIMARY KEY,
+     display_name      text,
+     avatar_url        text,
+     created_at        timestamptz DEFAULT now() NOT NULL,
+     updated_at        timestamptz DEFAULT now() NOT NULL,
+     route_preference  text DEFAULT 'avoid_stairs'::text NOT NULL,
+     );
 
 5. **Storage Buckets Setup**
    
@@ -174,6 +258,10 @@ Before you begin, ensure you have:
    - Click the report button (flag icon) on comments or features
    - Provide a reason for reporting
    - Submit the report for admin review
+   
+6. **Route**
+   - Set initial location
+   - Route towards target
 
 ### For Administrators:
 
@@ -193,6 +281,9 @@ Before you begin, ensure you have:
    - Click on map to set building location
    - Draw polygon outline or fetch from OpenStreetMap
    - Add building name and description
+
+4. **Manage Routes**
+   - Create custom routes
 
 ## 📁 Project Structure
 
@@ -392,7 +483,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 - Check existing [GitHub Issues](https://github.com/CSci-153-Web-Systems-and-Technologies/batch-2025-campus-accessibility-map-web/issues)
 - Create a new issue with detailed information
-- Contact the development team
 
 
 ---
