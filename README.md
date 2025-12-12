@@ -299,14 +299,6 @@ The application uses Material Design 3 (M3) color system with:
 - **Soft Deletion**: Content is soft-deleted, preserving data integrity
 - **Edge Functions**: Sensitive operations (like account deletion) use Supabase Edge Functions to keep service role keys secure
 
-## 📱 Mobile Support
-
-- **Responsive Design**: Fully responsive across all screen sizes
-- **Mobile Menu**: Hamburger menu for navigation on mobile
-- **Touch-friendly**: Large touch targets and optimized interactions
-- **Mobile Map**: Optimized map bounds and controls for mobile devices
-- **Compact UI**: Streamlined interface for smaller screens
-
 ## 🚀 Deployment
 
 ### Deploy to Vercel
@@ -393,25 +385,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [shadcn/ui](https://ui.shadcn.com/) for UI components
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [Material Design 3](https://m3.material.io/) for design system inspiration
+- [Freepik](https://freepik.com/) for bg image
 
 ## 📞 Support
 
 If you encounter any issues or have questions:
-- Check existing [GitHub Issues](https://github.com/your-repo/issues)
+- Check existing [GitHub Issues]([https://github.com/your-repo](https://github.com/CSci-153-Web-Systems-and-Technologies/batch-2025-campus-accessibility-map-web/issues)
 - Create a new issue with detailed information
 - Contact the development team
 
-## 🔮 Future Enhancements
-
-Potential features for future development:
-- Real-time collaboration features
-- Advanced analytics and reporting
-- Export functionality for accessibility reports
-- Integration with campus navigation systems
-- Mobile app version
-- Accessibility audit tools
-- Multi-language support
 
 ---
-
-Made with ❤️ for accessible campus communities.
