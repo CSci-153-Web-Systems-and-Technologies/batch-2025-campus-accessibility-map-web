@@ -14,22 +14,17 @@ export function RouteLoader({ graphRef }: RouteLoaderProps) {
   useEffect(() => {
     const loadRoutes = async () => {
       if (!graphRef.current) {
-        console.log('⏳ Graph not ready, skipping route load');
         return;
       }
-
-      console.log('📥 Loading public routes for routing...');
       const result = await fetchRoutes({ isPublic: true });
       
       if (result.error) {
-        console.error('Failed to load routes:', result.error);
         return;
       }
 
       const polylines = result.data?.data || result.data;
 
       if (!polylines || !Array.isArray(polylines) || polylines.length === 0) {
-        console.log('No public routes available');
         return;
       }
 
@@ -47,8 +42,6 @@ export function RouteLoader({ graphRef }: RouteLoaderProps) {
           }
         });
       });
-
-      console.log(`✅ Loaded ${polylines.length} routes into graph`);
       graphRef.current?.printStats();
     };
 

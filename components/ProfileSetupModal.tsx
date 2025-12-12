@@ -30,7 +30,6 @@ export function ProfileSetupModal() {
       const supabase = createClient()
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       if (!user) {
-        console.error('ProfileSetupModal: User not authenticated', authError)
         return
       }
 
@@ -40,7 +39,6 @@ export function ProfileSetupModal() {
       }>('/api/profile')
 
       if (error) {
-        console.error('ProfileSetupModal: Error fetching profile', error)
         return
       }
 

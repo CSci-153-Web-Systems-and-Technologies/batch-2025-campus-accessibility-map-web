@@ -94,7 +94,6 @@ export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPol
 
       if (fetchError) {
         if (fetchError.name !== 'AbortError') {
-          console.error('Error fetching buildings:', fetchError)
           setError(fetchError.message)
         }
         setIsLoading(false)
@@ -131,7 +130,6 @@ export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPol
     },
     onUpdate: async (payload) => {
       try {
-        // If the row was soft-deleted, remove it from state immediately
         if (payload.new && payload.new.deleted_at) {
           try { removeBuilding(payload.new.id as string) } catch {}
           return
@@ -139,7 +137,6 @@ export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPol
 
         const { data, error } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
         if (error) {
-          // If the building is no longer visible (404), remove it from state
           try { removeBuilding(payload.new.id as string) } catch {}
           return
         }

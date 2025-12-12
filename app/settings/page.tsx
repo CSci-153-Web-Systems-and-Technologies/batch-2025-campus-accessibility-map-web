@@ -141,7 +141,6 @@ export default function SettingsPage() {
           } : null)
         }
       } catch (error) {
-        console.error('Error uploading avatar:', error)
         alert('Failed to upload avatar')
       }
     }

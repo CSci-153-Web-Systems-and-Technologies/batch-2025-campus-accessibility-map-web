@@ -82,7 +82,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating comment:', error)
       return NextResponse.json(
         { error: 'Failed to update comment', details: error.message },
         { status: 400 }
@@ -91,7 +90,6 @@ export async function PATCH(
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -168,8 +166,6 @@ export async function DELETE(
       .select('id, deleted_at')
 
     if (error) {
-      console.error('Error deleting comment:', error)
-      console.error('Error details:', JSON.stringify(error, null, 2))
       return NextResponse.json(
         { error: 'Failed to delete comment', details: error.message, code: error.code },
         { status: 500 }
@@ -187,7 +183,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Comment deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

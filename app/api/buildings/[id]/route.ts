@@ -136,7 +136,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating building:', error)
       return NextResponse.json(
         { error: 'Failed to update building', details: error.message },
         { status: 400 }
@@ -163,8 +162,6 @@ export async function DELETE(
 
     const { data: { user } } = await supabase.auth.getUser()
     
-    console.log('DELETE building - User:', user?.id, 'Admin:', user?.user_metadata?.role)
-
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -195,12 +192,6 @@ export async function DELETE(
       )
     }
 
-    console.log('Attempting delete with user:', user.id, 'Building:', id)
-    
-    // Test if auth context is set in the database
-    const { data: authTest } = await supabase.rpc('test_auth_context')
-    console.log('DB auth context:', authTest)
-    
     const { data: updateData, error } = await supabase
       .from('buildings')
       .update({ deleted_at: new Date().toISOString() })
@@ -208,10 +199,7 @@ export async function DELETE(
       .select('id, deleted_at')
       .single()
     
-    console.log('Update result:', { updateData, error })
-
     if (error) {
-      console.error('Error deleting building:', JSON.stringify(error, null, 2))
       return NextResponse.json(
         { error: 'Failed to delete building', details: error.message, code: error.code },
         { status: 500 }
@@ -219,7 +207,6 @@ export async function DELETE(
     }
 
     if (!updateData) {
-      console.error('Update returned no rows - RLS policy may have blocked the update')
       return NextResponse.json(
         { error: 'Update failed: No rows were updated. This may be due to RLS policies.' },
         { status: 403 }
@@ -228,7 +215,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Building deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

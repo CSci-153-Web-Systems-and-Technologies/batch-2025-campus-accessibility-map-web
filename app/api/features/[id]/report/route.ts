@@ -82,7 +82,7 @@ export async function POST(
 
     return NextResponse.json({ data, message: 'Feature reported successfully' }, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

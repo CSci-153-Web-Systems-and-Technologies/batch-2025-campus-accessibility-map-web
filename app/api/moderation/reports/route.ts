@@ -152,7 +152,6 @@ export async function GET(request: Request) {
     ])
 
     if (commentReportsResult.error) {
-      console.error('Error fetching comment reports:', commentReportsResult.error)
       return NextResponse.json(
         { error: 'Failed to fetch comment reports', details: commentReportsResult.error.message },
         { status: 500 }
@@ -160,7 +159,6 @@ export async function GET(request: Request) {
     }
 
     if (featureReportsResult.error) {
-      console.error('Error fetching feature reports:', featureReportsResult.error)
       return NextResponse.json(
         { error: 'Failed to fetch feature reports', details: featureReportsResult.error.message },
         { status: 500 }
@@ -293,7 +291,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: allReports })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

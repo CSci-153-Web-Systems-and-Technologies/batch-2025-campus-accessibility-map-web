@@ -89,7 +89,6 @@ export function RoutingControl({
 
     const startNode = findNearestNode(graphRef.current, userLocation);
     if (!startNode) {
-      console.error('Could not find nearest node to user location');
       return;
     }
     
@@ -101,7 +100,6 @@ export function RoutingControl({
     ]);
 
     if (!result) {
-      console.error('No route found');
       alert('No accessible route found to this location');
       return;
     }

@@ -141,24 +141,4 @@ export function polylinesToGraph(polylines: L.Polyline[]): RouteGraph {
   return { nodes, edges };
 }
 
-/**
- * Display graph info in console
- */
-export function logGraph(graph: RouteGraph) {
-  console.log('📊 Route Graph Generated:');
-  console.log(`   Nodes: ${graph.nodes.length}`);
-  console.log(`   Edges: ${graph.edges.length}`);
-  console.log('');
-  console.log('🔵 Nodes:', graph.nodes);
-  console.log('🔗 Edges:', graph.edges);
-  
-  // Show connections
-  const connections: Record<string, string[]> = {};
-  graph.edges.forEach(edge => {
-    if (!connections[edge.source]) connections[edge.source] = [];
-    if (!connections[edge.target]) connections[edge.target] = [];
-    connections[edge.source].push(edge.target);
-    connections[edge.target].push(edge.source);
-  });
-  console.log('🌐 Connections:', connections);
-}
+

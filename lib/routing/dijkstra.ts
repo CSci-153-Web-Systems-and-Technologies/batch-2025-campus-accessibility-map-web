@@ -89,7 +89,6 @@ export function dijkstra(
 
   const finalDistance = distances.get(endNodeId) ?? Infinity;
   if (finalDistance === Infinity) {
-    console.log('No path found from', startNodeId, 'to', endNodeId);
     return null;
   }
 

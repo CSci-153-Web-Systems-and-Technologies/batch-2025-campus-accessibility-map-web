@@ -61,7 +61,6 @@ export async function DELETE(
       .eq('id', photoId)
 
     if (error) {
-      console.error('Error deleting photo:', error)
       return NextResponse.json(
         { error: 'Failed to delete photo', details: error.message },
         { status: 500 }
@@ -70,7 +69,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Photo deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

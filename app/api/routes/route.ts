@@ -26,7 +26,6 @@ export async function GET(request: Request) {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching route polylines:', error);
       return NextResponse.json(
         { error: 'Failed to fetch route polylines' },
         { status: 500 }
@@ -35,7 +34,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data });
   } catch (error) {
-    console.error('Unexpected error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -101,7 +99,6 @@ export async function POST(request: Request) {
         .select();
 
       if (insertError) {
-        console.error('Error inserting route polylines:', insertError);
         return NextResponse.json(
           { error: 'Failed to insert route polylines' },
           { status: 500 }
@@ -125,7 +122,6 @@ export async function POST(request: Request) {
         .single();
 
       if (updateError) {
-        console.error(`Error updating route polyline ${id}:`, updateError);
         return NextResponse.json(
           { error: `Failed to update route polyline ${id}` },
           { status: 500 }
@@ -139,7 +135,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data: results }, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -192,7 +187,6 @@ export async function PUT(request: Request) {
         .single()
 
       if (error) {
-        console.error(`Error updating route polyline ${id}:`, error)
         return NextResponse.json(
           { error: `Failed to update route polyline ${id}` },
           { status: 500 }
@@ -211,7 +205,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ data: results })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
@@ -241,10 +234,6 @@ export async function DELETE(request: Request) {
         { status: 400 }
       )
     }
-
-    console.log('🗑️ Attempting to delete routes:', ids);
-    console.log('👤 User ID:', user.id);
-
     const { data, error } = await supabase
       .from('route_polylines')
       .update({ deleted_at: new Date().toISOString() })
@@ -254,21 +243,16 @@ export async function DELETE(request: Request) {
       .select()
 
     if (error) {
-      console.error('Error deleting route polylines:', error)
       return NextResponse.json(
         { error: 'Failed to delete route polylines' },
         { status: 500 }
       )
     }
-
-    console.log('✅ Deleted routes:', data);
-
     return NextResponse.json({ 
       data,
       message: `Successfully deleted ${data.length} route polyline(s)` 
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

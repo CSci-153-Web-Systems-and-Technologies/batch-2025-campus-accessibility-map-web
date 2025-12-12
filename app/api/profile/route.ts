@@ -20,7 +20,6 @@ export async function GET(request: Request) {
       .single()
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error)
       return NextResponse.json(
         { error: 'Failed to fetch profile' },
         { status: 500 }
@@ -34,7 +33,6 @@ export async function GET(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -86,7 +84,6 @@ export async function PATCH(request: Request) {
       .single()
 
     if (updateError) {
-      console.error('Error updating profile:', updateError)
       return NextResponse.json(
         { error: 'Failed to update profile', details: updateError.message },
         { status: 500 }
@@ -99,7 +96,6 @@ export async function PATCH(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

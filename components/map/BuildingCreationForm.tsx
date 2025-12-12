@@ -84,12 +84,11 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
           fd.append('file', photoFile)
           await fetch(`/api/buildings/${result.data.id}/photos`, { method: 'POST', body: fd })
         } catch (err) {
-          console.error('Failed to upload building photo:', err)
+          // Photo upload failed
         }
       }
       onSuccess()
     } catch (err) {
-      console.error('Error creating building:', err)
       setError(err instanceof Error ? err.message : 'Failed to create building')
     } finally {
       setIsLoading(false)

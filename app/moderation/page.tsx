@@ -103,13 +103,11 @@ export default function ModerationPage() {
       const { data, error } = await safeFetch<Report[]>(url)
 
       if (error) {
-        console.error('Error loading reports:', error)
         return
       }
 
       setReports(data || [])
     } catch (error) {
-      console.error('Error loading reports:', error)
     } finally {
       setIsLoading(false)
     }
@@ -132,7 +130,6 @@ export default function ModerationPage() {
 
       await loadReports()
     } catch (error) {
-      console.error('Error resolving report:', error)
       alert('Failed to update report. Please try again.')
     } finally {
       setResolvingId(null)
@@ -166,7 +163,6 @@ export default function ModerationPage() {
       await handleResolve(report.id, true, report.type)
       setConfirmDelete(null)
     } catch (error) {
-      console.error('Error deleting:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete. Please try again.')
     } finally {
       setDeletingId(null)

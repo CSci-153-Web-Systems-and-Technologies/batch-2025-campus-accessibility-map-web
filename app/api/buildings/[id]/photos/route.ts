@@ -58,7 +58,6 @@ export async function POST(
       })
 
     if (uploadError) {
-      console.error('Error uploading file to storage:', uploadError)
       return NextResponse.json({ error: 'Failed to upload file to storage', details: uploadError.message }, { status: 500 })
     }
 
@@ -102,7 +101,6 @@ export async function GET(
       .single()
 
     if (error) {
-      console.error('Error fetching building photo:', error)
       return NextResponse.json({ error: 'Failed to fetch building photo' }, { status: 500 })
     }
 

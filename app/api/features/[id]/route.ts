@@ -32,7 +32,6 @@ export async function GET(
 
     return NextResponse.json({ data: featureWithPhotos })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -144,7 +143,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating feature:', error)
       return NextResponse.json(
         { error: 'Failed to update feature', details: error.message },
         { status: 400 }
@@ -153,7 +151,6 @@ export async function PATCH(
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -209,8 +206,6 @@ export async function DELETE(
       .select('id, deleted_at')
 
     if (error) {
-      console.error('Error deleting feature:', error)
-      console.error('Error details:', JSON.stringify(error, null, 2))
       return NextResponse.json(
         { error: 'Failed to delete feature', details: error.message, code: error.code },
         { status: 500 }
@@ -219,7 +214,6 @@ export async function DELETE(
 
     // Verify the update actually happened
     if (!updateData || updateData.length === 0) {
-      console.error('Update returned no rows - RLS policy may have blocked the update')
       return NextResponse.json(
         { error: 'Update failed: No rows were updated. This may be due to RLS policies.' },
         { status: 403 }
@@ -228,7 +222,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Feature deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

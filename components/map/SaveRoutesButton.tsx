@@ -19,7 +19,6 @@ export function SaveRoutesButton({ onSave, disabled }: SaveRoutesButtonProps) {
       await onSave();
       setLastSaved(new Date());
     } catch (error) {
-      console.error('Failed to save routes:', error);
     } finally {
       setIsSaving(false);
     }
