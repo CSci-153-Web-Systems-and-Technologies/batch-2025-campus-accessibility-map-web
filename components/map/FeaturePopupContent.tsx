@@ -189,7 +189,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           setLikeData(likesResult.data)
         }
       } catch (error) {
-        // Ignore abort errors
       } finally {
         if (!isActive) return
         setIsLoadingComments(false)
@@ -404,6 +403,12 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           const result = await uploadFeaturePhoto(feature.id, newPhotos[i], isPrimary)
           if (!result.success) {
             uploadErrors.push(`Photo ${i + 1}: ${result.error || 'Upload failed'}`)
+          } else if (result.data) {
+            setLocalPhotos(prev => {
+              const exists = prev?.some(p => p.id === result.data.id)
+              if (exists) return prev
+              return [...(prev || []), result.data]
+            })
           }
         }
       }
