@@ -20,6 +20,8 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
   const [description, setDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const { addNewBuilding, polygonCoordinates } = useBuildingCreation()
 
   if (!initialLat || !initialLng) {
@@ -76,6 +78,15 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
           coordinates: [result.data.latitude, result.data.longitude],
         } as any)
       }
+      if (photoFile) {
+        try {
+          const fd = new FormData()
+          fd.append('file', photoFile)
+          await fetch(`/api/buildings/${result.data.id}/photos`, { method: 'POST', body: fd })
+        } catch (err) {
+          console.error('Failed to upload building photo:', err)
+        }
+      }
       onSuccess()
     } catch (err) {
       console.error('Error creating building:', err)
@@ -103,6 +114,32 @@ export function BuildingCreationForm({ onSuccess, onCancel, initialLat, initialL
           maxLength={200}
           required
         />
+      </div>
+
+      <div>
+        <Label htmlFor="photo">Photo (optional)</Label>
+        <input
+          id="photo"
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null
+            setPhotoFile(file)
+            if (file) {
+              const reader = new FileReader()
+              reader.onloadend = () => setPhotoPreview(reader.result as string)
+              reader.readAsDataURL(file)
+            } else {
+              setPhotoPreview(null)
+            }
+          }}
+          className="mt-1"
+        />
+        {photoPreview && (
+          <div className="mt-2">
+            <img src={photoPreview} alt="Preview" className="w-32 h-20 object-cover rounded-md border" />
+          </div>
+        )}
       </div>
 
       <div>

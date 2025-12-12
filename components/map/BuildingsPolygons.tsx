@@ -131,7 +131,18 @@ export function BuildingsPolygons({ newBuilding, onBuildingClick }: BuildingsPol
     },
     onUpdate: async (payload) => {
       try {
-        const { data } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
+        // If the row was soft-deleted, remove it from state immediately
+        if (payload.new && payload.new.deleted_at) {
+          try { removeBuilding(payload.new.id as string) } catch {}
+          return
+        }
+
+        const { data, error } = await safeFetch<DBBuilding>(`/api/buildings/${payload.new.id}`)
+        if (error) {
+          // If the building is no longer visible (404), remove it from state
+          try { removeBuilding(payload.new.id as string) } catch {}
+          return
+        }
         if (data) addOrUpdateBuilding(transformApiBuildingToMapBuilding(data))
       } catch {}
     },
