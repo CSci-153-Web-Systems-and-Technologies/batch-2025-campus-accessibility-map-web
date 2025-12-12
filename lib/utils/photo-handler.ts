@@ -47,6 +47,7 @@ export function generatePhotoPreviews(files: File[]): Promise<string[]> {
 export interface PhotoUploadResult {
   success: boolean
   error?: string
+  data?: any
 }
 
 export async function uploadFeaturePhoto(
@@ -76,7 +77,9 @@ export async function uploadFeaturePhoto(
       return { success: false, error: errorMsg }
     }
 
-    return { success: true }
+    const json = await response.json().catch(() => null)
+    const created = json?.data ?? null
+    return { success: true, data: created }
   } catch (error) {
     return {
       success: false,
@@ -88,8 +91,9 @@ export async function uploadFeaturePhoto(
 export async function uploadFeaturePhotos(
   featureId: string,
   photos: File[]
-): Promise<{ errors: string[] }> {
+): Promise<{ errors: string[]; photos?: any[] }> {
   const errors: string[] = []
+  const created: any[] = []
 
   for (let i = 0; i < photos.length; i++) {
     const photo = photos[i]
@@ -98,10 +102,12 @@ export async function uploadFeaturePhotos(
 
     if (!result.success) {
       errors.push(`Photo ${i + 1}: ${result.error || 'Upload failed'}`)
+    } else if (result.data) {
+      created.push(result.data)
     }
   }
 
-  return { errors }
+  return { errors, photos: created }
 }
 
 export async function deleteFeaturePhoto(
