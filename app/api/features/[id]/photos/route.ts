@@ -15,7 +15,6 @@ export async function POST(
     const { id: featureId } = await params
 
     const { data: { user } } = await supabase.auth.getUser()
-
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -95,12 +94,15 @@ export async function POST(
         .is('deleted_at', null)
     }
 
-    const photoData: FeaturePhotoInsert = {
+    const photoData: any = {
       feature_id: featureId,
       photo_url: fileName,
       uploaded_by: user.id,
-      caption: caption || null,
       is_primary: isPrimary,
+    }
+
+    if (caption && typeof caption === 'string' && caption.trim().length > 0) {
+      photoData.caption = caption.trim()
     }
 
     const { data, error } = await supabase
@@ -112,7 +114,7 @@ export async function POST(
     if (error) {
       await supabase.storage.from(STORAGE_BUCKET).remove([fileName])
       return NextResponse.json(
-        { error: 'Failed to save photo record', details: error.message },
+        { error: 'Failed to save photo record', details: error.message, code: error.code },
         { status: 500 }
       )
     }
