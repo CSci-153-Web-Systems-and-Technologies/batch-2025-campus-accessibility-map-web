@@ -14,9 +14,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Campus Accessibility Map",
   description: "Interactive map showing accessibility features and buildings",
-  icons: {
-    icon: '/favicon.ico?v=4'
-  },
 };
 
 const geistSans = Geist({

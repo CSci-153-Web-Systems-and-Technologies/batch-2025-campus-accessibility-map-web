@@ -80,10 +80,12 @@ function MapLayoutContent({
           {!hasOverlay && (
             <>
               <FiltersDrawer />
-              <AddMarkerButton />
-              <AddBuildingButton />
-              <EditRoutesButton />
-              <SetLocationButton onClick={onSetLocation} isActive={isSettingLocation} />
+              <div className="absolute bottom-4 right-4 z-[1000] flex flex-row-reverse gap-4">
+                <AddMarkerButton />
+                <AddBuildingButton />
+                <EditRoutesButton />
+                <SetLocationButton onClick={onSetLocation} isActive={isSettingLocation} />
+              </div>
               <RouteDrawingOverlay />
             </>
           )}
