@@ -13,6 +13,7 @@ export interface Building {
   description: string | null
   latitude: number
   longitude: number
+  photo_path?: string | null
   polygon_coordinates: number[][] | null
   created_by: string
   created_at: string
