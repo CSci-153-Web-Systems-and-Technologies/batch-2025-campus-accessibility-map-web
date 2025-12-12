@@ -25,7 +25,6 @@ export class RouteGraph {
     if (existingNode) {
       const mergedTags = Array.from(new Set([...existingNode.tags, ...tags]));
       existingNode.tags = mergedTags;
-      console.log('📍 Reusing existing node:', existingNode.id, 'at', latlng);
       return existingNode;
     }
 
@@ -37,7 +36,6 @@ export class RouteGraph {
       edges: new Map(),
     };
     this.nodes.set(nodeId, node);
-    console.log('📍 Created new node:', nodeId, 'at', latlng);
     return node;
   }
 
@@ -57,7 +55,6 @@ export class RouteGraph {
 
     const existingEdge = this.edges.get(edgeId);
     if (existingEdge) {
-      console.log('🔗 Reusing existing edge:', edgeId);
       return existingEdge;
     }
 
@@ -74,7 +71,6 @@ export class RouteGraph {
     nodeA.edges.set(nodeB.id, distance);
     nodeB.edges.set(nodeA.id, distance);
 
-    console.log('🔗 Created edge:', edgeId, `(${distance.toFixed(2)}m)`);
     return edge;
   }
 
@@ -92,7 +88,6 @@ export class RouteGraph {
       createdEdges.push(edge);
     }
 
-    console.log(`✅ Added polyline ${polylineId}:`, createdNodes.length, 'nodes,', createdEdges.length, 'edges');
     return { nodes: createdNodes, edges: createdEdges };
   }
 
@@ -125,17 +120,13 @@ export class RouteGraph {
 
     nodesToRemove.forEach(nodeId => {
       this.nodes.delete(nodeId);
-      console.log('🗑️ Removed orphaned node:', nodeId);
     });
-
-    console.log(`🗑️ Removed polyline ${polylineId}:`, edgesToRemove.length, 'edges,', nodesToRemove.length, 'orphaned nodes');
   }
 
   updateNodeTags(nodeId: string, tags: string[]): void {
     const node = this.nodes.get(nodeId);
     if (node) {
       node.tags = tags;
-      console.log('🏷️ Updated tags for node:', nodeId, tags);
     }
   }
 
@@ -162,19 +153,12 @@ export class RouteGraph {
   }
 
   printStats(): void {
-    console.log('📊 Graph Statistics:');
-    console.log('  Nodes:', this.nodes.size);
-    console.log('  Edges:', this.edges.size);
-    
     const connectionCounts = new Map<number, number>();
     this.nodes.forEach(node => {
       const count = node.edges.size;
       connectionCounts.set(count, (connectionCounts.get(count) || 0) + 1);
     });
-    
-    console.log('  Node connections:');
     connectionCounts.forEach((nodeCount, edgeCount) => {
-      console.log(`    ${edgeCount} edges: ${nodeCount} nodes`);
     });
   }
 }

@@ -29,7 +29,6 @@ export function NodeTaggingModal({ onRouteHere }: { onRouteHere?: (nodeId: strin
     if ((window as any).updateRouteNodeTags) {
       (window as any).updateRouteNodeTags(selectedNode.id, tags);
     }
-    console.log('Saved tags:', selectedNode.id, tags);
     setSelectedNode(null);
   };
 

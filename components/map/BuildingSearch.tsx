@@ -48,7 +48,6 @@ export function BuildingSearchMapControl() {
         )
 
         if (error && error.name !== 'AbortError') {
-          console.error('Error searching buildings:', error)
           setSearchResults([])
         } else if (data) {
           const buildingsData: Building[] = data.map(transformApiBuildingToMapBuilding)

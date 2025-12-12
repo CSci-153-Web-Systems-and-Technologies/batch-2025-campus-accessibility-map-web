@@ -76,13 +76,6 @@ export async function POST(
       })
 
     if (uploadError) {
-      console.error('Error uploading file to storage:', {
-        error: uploadError,
-        message: uploadError.message,
-        name: uploadError.name,
-        bucket: STORAGE_BUCKET,
-        fileName,
-      })
       return NextResponse.json(
         { error: 'Failed to upload file to storage', details: uploadError.message },
         { status: 500 }
@@ -100,10 +93,6 @@ export async function POST(
         .eq('feature_id', featureId)
         .eq('is_primary', true)
         .is('deleted_at', null)
-
-      if (unsetError) {
-        console.error('Error unsetting previous primary photo:', unsetError)
-      }
     }
 
     const photoData: FeaturePhotoInsert = {
@@ -121,7 +110,6 @@ export async function POST(
       .single()
 
     if (error) {
-      console.error('Error saving photo record:', error)
       await supabase.storage.from(STORAGE_BUCKET).remove([fileName])
       return NextResponse.json(
         { error: 'Failed to save photo record', details: error.message },
@@ -136,7 +124,6 @@ export async function POST(
       },
     }, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -175,7 +162,6 @@ export async function GET(
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching photos:', error)
       return NextResponse.json(
         { error: 'Failed to fetch photos' },
         { status: 500 }
@@ -189,7 +175,6 @@ export async function GET(
 
     return NextResponse.json({ data: photosWithUrls })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -43,7 +43,6 @@ export async function GET(
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('Error fetching comments:', error)
       return NextResponse.json(
         { error: 'Failed to fetch comments' },
         { status: 500 }
@@ -196,7 +195,6 @@ export async function POST(
       .single()
 
     if (error) {
-      console.error('Error creating comment:', error)
       return NextResponse.json(
         { error: 'Failed to create comment', details: error.message },
         { status: 400 }

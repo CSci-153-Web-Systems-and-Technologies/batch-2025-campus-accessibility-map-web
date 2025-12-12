@@ -22,7 +22,6 @@ export const RouteDrawingProvider: React.FC<{ children: ReactNode }> = ({
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
 
   const setDrawing = (drawing: boolean) => {
-    console.log('Route drawing mode:', drawing ? 'ENABLED' : 'DISABLED');
     setIsDrawing(drawing);
     if (!drawing) {
       setSelectedNode(null); // Clear selection when exiting drawing mode

@@ -89,7 +89,6 @@ export function AccessibilityMarkers({ newFeature }: AccessibilityMarkersProps) 
       ])
 
       if (featuresResult.error && featuresResult.error.name !== 'AbortError') {
-        console.error('Error fetching features:', featuresResult.error)
         setError(featuresResult.error.message)
         setIsLoading(false)
         return
@@ -168,7 +167,6 @@ export function AccessibilityMarkers({ newFeature }: AccessibilityMarkersProps) 
   }
 
   if (error) {
-    console.error('Error loading markers:', error)
     return null
   }
 

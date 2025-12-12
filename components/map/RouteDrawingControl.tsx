@@ -57,7 +57,6 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
       const deleteResult = await deleteRoutes(idsToDelete);
       
       if (deleteResult.error) {
-        console.error('Failed to delete routes:', deleteResult.error);
         throw deleteResult.error;
       }
       
@@ -99,7 +98,6 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
       const result = await saveRoutes(polylinesToSave);
       
       if (result.error) {
-        console.error('Failed to save routes:', result.error);
         throw result.error;
       }
       
@@ -178,7 +176,6 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
       const result = await fetchRoutes({ isPublic: true });
       
       if (result.error) {
-        console.error('Failed to load routes for editing:', result.error);
         return;
       }
 
@@ -406,7 +403,6 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
                 const nodeDistance = nodePoint.distanceTo(vertexPoint);
                 
                 if (nodeDistance < 30) {
-                  console.log(`✅ Vertex ${index} snapped to node (${nodeDistance.toFixed(1)}px)`);
                   showSnapIndicator(nearestNode.latlng, 'node');
                   return nearestNode.latlng;
                 }
@@ -414,7 +410,6 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
               
               const nearestLine = findNearestLinePoint(latlng);
               if (nearestLine && nearestLine.layer !== layer) {
-                console.log(`✅ Vertex ${index} snapped to line - inserting node`);
                 showSnapIndicator(nearestLine.latlng, 'line');
                 
                 const existingLatLngs = nearestLine.layer.getLatLngs() as L.LatLng[];
@@ -490,12 +485,10 @@ export function RouteDrawingControl({ graphRef }: RouteDrawingControlProps) {
     map.on(L.Draw.Event.DELETED, onDeleted);
 
     map.on(L.Draw.Event.EDITSTART, () => {
-      console.log('Edit mode started');
       hideSnapIndicator();
     });
 
     map.on(L.Draw.Event.EDITSTOP, () => {
-      console.log('Edit mode stopped');
       hideSnapIndicator();
     });
 

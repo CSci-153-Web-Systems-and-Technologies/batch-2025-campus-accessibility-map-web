@@ -153,7 +153,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
 
     async function fetchCommentsAndLikes() {
       try {
-        console.log('[FeaturePopupContent] fetchCommentsAndLikes:start', { featureId: feature.id })
         const [commentsResult, likesResult] = await Promise.all([
           safeFetch<CommentWithUser[]>(
             `/api/features/${feature.id}/comments`,
@@ -184,7 +183,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
           flattenComments(commentsResult.data as CommentWithReplies[])
           setComments(flatComments)
           setHasLoadedComments(true)
-          console.log('[FeaturePopupContent] fetchCommentsAndLikes:commentsLoaded', { featureId: feature.id, count: flatComments.length })
         }
 
         if (!likesResult.error && likesResult.data) {
@@ -192,17 +190,9 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         }
       } catch (error) {
         // Ignore abort errors
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Error fetching comments/likes:', error)
-        }
       } finally {
         if (!isActive) return
         setIsLoadingComments(false)
-        console.log('[FeaturePopupContent] fetchCommentsAndLikes:finally', {
-          featureId: feature.id,
-          isLoadingComments: false,
-          hasLoadedComments: true,
-        })
       }
     }
 
@@ -213,15 +203,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       abortController.abort()
     }
   }, [feature.id])
-
-  useEffect(() => {
-    console.log('[FeaturePopupContent] commentRenderState', {
-      featureId: feature.id,
-      isLoadingComments,
-      hasLoadedComments,
-      commentCount: comments.length,
-    })
-  }, [feature.id, isLoadingComments, hasLoadedComments, comments.length])
 
   const isLikesLoading = (!hasLoadedComments || isLoadingComments) || isLiking
 
@@ -319,7 +300,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         }))
       }
     } catch (error) {
-      console.error('Error toggling like:', error)
     } finally {
       setIsLiking(false)
     }
@@ -442,7 +422,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         }
       } catch {}
     } catch (error) {
-      console.error('Error updating feature:', error)
       alert('Failed to update feature. Please try again.')
     } finally {
       setIsSavingFeature(false)
@@ -466,7 +445,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       // close modal and rely on realtime subscriptions to remove the feature from the map
       closeModal()
     } catch (error) {
-      console.error('Error deleting feature:', error)
       alert('Failed to delete feature. Please try again.')
       setIsDeletingFeature(false)
     }
@@ -511,7 +489,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         setEditCommentContent('')
       }
     } catch (error) {
-      console.error('Error updating comment:', error)
       alert('Failed to update comment. Please try again.')
     } finally {
       setIsSavingComment(false)
@@ -536,7 +513,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         setSelectedComment(null)
       }
     } catch (error) {
-      console.error('Error deleting comment:', error)
       alert('Failed to delete comment. Please try again.')
     } finally {
       setIsDeletingComment(false)
@@ -570,7 +546,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       setReportingCommentId(null)
       alert('Comment reported successfully. Thank you for your feedback.')
     } catch (error) {
-      console.error('Error reporting comment:', error)
       alert(error instanceof Error ? error.message : 'Failed to report comment. Please try again.')
     } finally {
       setIsReportingComment(false)
@@ -602,7 +577,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
       setShowReportFeatureModal(false)
       alert('Feature reported successfully. Thank you for your feedback.')
     } catch (error) {
-      console.error('Error reporting feature:', error)
       alert(error instanceof Error ? error.message : 'Failed to report feature. Please try again.')
     } finally {
       setIsReportingFeature(false)
@@ -645,7 +619,6 @@ export function FeaturePopupContent({ feature }: FeaturePopupContentProps) {
         } catch (e) {}
       }
     } catch (error) {
-      console.error('Error submitting comment:', error)
     } finally {
       setIsSubmittingComment(false)
     }

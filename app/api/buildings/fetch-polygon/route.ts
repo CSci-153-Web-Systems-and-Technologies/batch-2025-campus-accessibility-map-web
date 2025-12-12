@@ -106,7 +106,6 @@ export async function POST(request: Request) {
       message: 'Building polygon fetched successfully',
     })
   } catch (error) {
-    console.error('Error fetching building polygon:', error)
     return NextResponse.json(
       {
         error: 'Failed to fetch building polygon',

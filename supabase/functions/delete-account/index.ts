@@ -24,7 +24,6 @@ serve(async (req) => {
     const supabaseAnonKey = req.headers.get('apikey') || Deno.env.get('SUPABASE_ANON_KEY')
     
     if (!supabaseAnonKey) {
-      console.error('Missing SUPABASE_ANON_KEY')
       return new Response(
         JSON.stringify({ error: 'Server configuration error', details: 'Missing anon key' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -35,10 +34,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing Supabase environment variables', {
-        hasUrl: !!supabaseUrl,
-        hasServiceKey: !!supabaseServiceKey
-      })
       return new Response(
         JSON.stringify({ error: 'Server configuration error', details: 'Missing Supabase environment variables' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -105,7 +100,6 @@ serve(async (req) => {
           await supabaseAdmin.storage.from('avatars').remove([avatarPath])
         }
       } catch (e) {
-        console.error('Error removing avatar from storage:', e)
       }
     }
 
@@ -128,7 +122,6 @@ serve(async (req) => {
             await supabaseAdmin.storage.from('feature-photos').remove(batch)
           }
         } catch (e) {
-          console.error('Error removing feature photos from storage:', e)
         }
       }
     }
@@ -136,7 +129,6 @@ serve(async (req) => {
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
 
     if (deleteError) {
-      console.error('Error deleting user:', deleteError)
       return new Response(
         JSON.stringify({ error: 'Failed to delete account', details: deleteError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -148,7 +140,6 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Unexpected error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

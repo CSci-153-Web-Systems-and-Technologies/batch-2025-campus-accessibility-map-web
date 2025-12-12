@@ -66,7 +66,6 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
 
         if (fetchError) {
           if (fetchError.name !== 'AbortError') {
-            console.error('Error fetching building features:', fetchError)
             setError(fetchError.message)
           }
           return
@@ -160,7 +159,6 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       setIsEditing(false)
       // Realtime subscription will update the building automatically
     } catch (error) {
-      console.error('Error updating building:', error)
       alert(error instanceof Error ? error.message : 'Failed to update building. Please try again.')
     } finally {
       setIsSaving(false)
@@ -192,7 +190,6 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       setEditPhotoPreview(null)
       // Realtime subscription will update the building automatically
     } catch (err) {
-      console.error('Error uploading building photo:', err)
       alert('Failed to upload photo')
     }
   }
@@ -214,7 +211,6 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       // close modal and rely on realtime subscriptions to remove the building from the map
       closeModal()
     } catch (error) {
-      console.error('Error deleting building:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete building. Please try again.')
       setIsDeleting(false)
     }
