@@ -58,7 +58,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating report:', error)
       return NextResponse.json(
         { error: 'Failed to update report', details: error.message },
         { status: 500 }
@@ -67,7 +66,6 @@ export async function PATCH(
 
     return NextResponse.json({ data })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

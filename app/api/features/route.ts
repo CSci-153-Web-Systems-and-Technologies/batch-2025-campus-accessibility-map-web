@@ -34,7 +34,6 @@ export async function GET(request: Request) {
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching features:', error)
       return NextResponse.json(
         { error: 'Failed to fetch features' },
         { status: 500 }
@@ -47,7 +46,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: featuresWithPhotos })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -108,7 +106,6 @@ export async function POST(request: Request) {
       .single()
 
     if (error) {
-      console.error('Error creating feature:', error)
       return NextResponse.json(
         { error: 'Failed to create feature', details: error.message },
         { status: 400 }
@@ -117,7 +114,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

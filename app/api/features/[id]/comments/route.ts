@@ -43,7 +43,6 @@ export async function GET(
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('Error fetching comments:', error)
       return NextResponse.json(
         { error: 'Failed to fetch comments' },
         { status: 500 }
@@ -177,11 +176,16 @@ export async function POST(
       }
     }
 
-    const commentData: FeatureCommentInsert = {
+    // Build insert payload without referencing `parent_id` unless provided by client.
+    // Some DB schemas may not have a `parent_id` column (flat comments only).
+    const commentData: Partial<FeatureCommentInsert> = {
       feature_id: featureId,
       user_id: user.id,
       content: body.content.trim(),
-      parent_id: body.parent_id || null,
+    }
+
+    if (Object.prototype.hasOwnProperty.call(body, 'parent_id') && body.parent_id) {
+      ;(commentData as any).parent_id = body.parent_id
     }
 
     const { data, error } = await supabase
@@ -191,7 +195,6 @@ export async function POST(
       .single()
 
     if (error) {
-      console.error('Error creating comment:', error)
       return NextResponse.json(
         { error: 'Failed to create comment', details: error.message },
         { status: 400 }

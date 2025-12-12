@@ -20,7 +20,6 @@ export async function GET(request: Request) {
       .single()
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error)
       return NextResponse.json(
         { error: 'Failed to fetch profile' },
         { status: 500 }
@@ -34,7 +33,6 @@ export async function GET(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -55,9 +53,9 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { firstName, lastName } = body
+    const { firstName, lastName, routePreference, route_preference } = body
 
-    if (firstName === undefined && lastName === undefined) {
+    if (firstName === undefined && lastName === undefined && routePreference === undefined && route_preference === undefined) {
       return NextResponse.json(
         { error: 'No fields to update' },
         { status: 400 }
@@ -66,19 +64,26 @@ export async function PATCH(request: Request) {
 
     const displayName = [firstName, lastName].filter(Boolean).join(' ').trim() || null
 
+    const rawPref = route_preference ?? routePreference
+    const allowedPrefs = ['avoid_stairs', 'no_preference']
+    const pref = typeof rawPref === 'string' && allowedPrefs.includes(rawPref) ? rawPref : undefined
+
+    const upsertRow: any = {
+      id: user.id,
+      display_name: displayName,
+    }
+
+    if (pref) upsertRow.route_preference = pref
+
     const { data, error: updateError } = await supabase
       .from('user_profiles')
-      .upsert({
-        id: user.id,
-        display_name: displayName,
-      }, {
+      .upsert(upsertRow, {
         onConflict: 'id'
       })
       .select()
       .single()
 
     if (updateError) {
-      console.error('Error updating profile:', updateError)
       return NextResponse.json(
         { error: 'Failed to update profile', details: updateError.message },
         { status: 500 }
@@ -91,7 +96,6 @@ export async function PATCH(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

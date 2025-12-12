@@ -46,7 +46,6 @@ export async function POST(
         .eq('id', existingLike.data.id)
 
       if (deleteError) {
-        console.error('Error removing like:', deleteError)
         return NextResponse.json(
           { error: 'Failed to remove like', details: deleteError.message },
           { status: 500 }
@@ -68,7 +67,6 @@ export async function POST(
         })
 
       if (insertError) {
-        console.error('Error adding like:', insertError)
         return NextResponse.json(
           { error: 'Failed to add like', details: insertError.message },
           { status: 500 }
@@ -121,7 +119,6 @@ export async function GET(
       .eq('feature_id', featureId)
 
     if (countError) {
-      console.error('Error counting likes:', countError)
       return NextResponse.json(
         { error: 'Failed to fetch like count' },
         { status: 500 }
@@ -147,7 +144,6 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

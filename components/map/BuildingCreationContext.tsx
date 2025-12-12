@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
-import type { LatLng } from '@/types/map'
+import type { LatLng, Building } from '@/types/map'
 
 interface BuildingCreationContextType {
   isCreating: boolean
@@ -13,8 +13,8 @@ interface BuildingCreationContextType {
   openModal: () => void
   closeModal: () => void
   isModalOpen: boolean
-  refreshBuildings: () => void
-  buildingsRefreshTrigger: number
+  addNewBuilding: (building: Building) => void
+  newBuilding: Building | null
 }
 
 const BuildingCreationContext = createContext<BuildingCreationContextType | undefined>(undefined)
@@ -24,7 +24,7 @@ export function BuildingCreationProvider({ children }: { children: ReactNode }) 
   const [clickedCoordinates, setClickedCoordinates] = useState<LatLng | null>(null)
   const [polygonCoordinates, setPolygonCoordinates] = useState<number[][] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [buildingsRefreshTrigger, setBuildingsRefreshTrigger] = useState(0)
+  const [newBuilding, setNewBuilding] = useState<Building | null>(null)
 
   const openModal = useCallback(() => {
     setIsModalOpen(true)
@@ -38,8 +38,9 @@ export function BuildingCreationProvider({ children }: { children: ReactNode }) 
     setIsCreating(false)
   }, [])
 
-  const refreshBuildings = useCallback(() => {
-    setBuildingsRefreshTrigger(prev => prev + 1)
+  const addNewBuilding = useCallback((building: Building) => {
+    setNewBuilding(building)
+    setTimeout(() => setNewBuilding(null), 100)
   }, [])
 
   return (
@@ -53,8 +54,8 @@ export function BuildingCreationProvider({ children }: { children: ReactNode }) 
       openModal,
       closeModal,
       isModalOpen,
-      refreshBuildings,
-      buildingsRefreshTrigger,
+      addNewBuilding,
+      newBuilding,
     }}>
       {children}
     </BuildingCreationContext.Provider>

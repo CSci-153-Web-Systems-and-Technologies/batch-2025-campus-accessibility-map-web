@@ -259,7 +259,6 @@ export function applyTheme(theme: ThemeColors, isDark: boolean = false, contrast
     localStorage.setItem('theme-dark', JSON.stringify(isDark))
     localStorage.setItem('theme-contrast', contrastLevel)
   } catch (error) {
-    console.warn('Failed to save theme to localStorage:', error)
   }
 }
 
@@ -272,7 +271,6 @@ export function loadContrastLevel(): ContrastLevel {
       return saved as ContrastLevel
     }
   } catch (error) {
-    console.warn('Failed to load contrast level from localStorage:', error)
   }
   
   return 'medium'
@@ -292,7 +290,6 @@ export function loadTheme(): ThemeColors {
       return JSON.parse(saved) as ThemeColors
     }
   } catch (error) {
-    console.warn('Failed to load theme from localStorage:', error)
   }
 
   return DEFAULT_THEME
@@ -307,7 +304,6 @@ export function isDarkMode(): boolean {
       return JSON.parse(saved) as boolean
     }
   } catch (error) {
-    console.warn('Failed to load dark mode preference:', error)
   }
 
   return window.matchMedia('(prefers-color-scheme: dark)').matches

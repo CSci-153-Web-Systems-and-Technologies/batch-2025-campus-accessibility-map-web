@@ -103,13 +103,11 @@ export default function ModerationPage() {
       const { data, error } = await safeFetch<Report[]>(url)
 
       if (error) {
-        console.error('Error loading reports:', error)
         return
       }
 
       setReports(data || [])
     } catch (error) {
-      console.error('Error loading reports:', error)
     } finally {
       setIsLoading(false)
     }
@@ -132,7 +130,6 @@ export default function ModerationPage() {
 
       await loadReports()
     } catch (error) {
-      console.error('Error resolving report:', error)
       alert('Failed to update report. Please try again.')
     } finally {
       setResolvingId(null)
@@ -166,7 +163,6 @@ export default function ModerationPage() {
       await handleResolve(report.id, true, report.type)
       setConfirmDelete(null)
     } catch (error) {
-      console.error('Error deleting:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete. Please try again.')
     } finally {
       setDeletingId(null)
@@ -176,8 +172,14 @@ export default function ModerationPage() {
   if (isAdminLoading || isLoading) {
     return (
       <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-m3-on-surface-variant">Loading...</p>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <div className="m3-dot-loader-lg">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="text-m3-on-surface-variant text-sm">Loading...</p>
         </div>
       </div>
     )

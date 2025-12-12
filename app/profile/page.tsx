@@ -175,8 +175,14 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="bg-m3-surface text-m3-on-surface p-6 rounded-lg shadow">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-m3-on-surface-variant">Loading profile...</p>
+        <div className="flex flex-col items-center justify-center h-64 gap-3">
+          <div className="m3-dot-loader-lg">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p className="text-m3-on-surface-variant text-sm">Loading profile...</p>
         </div>
       </div>
     )

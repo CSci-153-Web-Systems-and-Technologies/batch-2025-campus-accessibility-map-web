@@ -1,7 +1,7 @@
 'use client'
 
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { VSU_CAMPUS_CONFIG } from '@/types/map'
 import { configureLeafletIcons } from '@/lib/leaflet/icon-config'
 import { MapClickHandler } from './MapClickHandler'
@@ -12,7 +12,13 @@ import { useBuildingModal } from './BuildingModalContext'
 import { AccessibilityMarkers } from './AccessibilityMarkers'
 import { BuildingsPolygons } from './BuildingsPolygons'
 import { BuildingSearchMapControl } from './BuildingSearch'
+import { RouteDrawingControl } from './RouteDrawingControl'
+import { RouteLoader } from './RouteLoader'
+import { RoutingControl } from './RoutingControl'
+import { RouteGraph } from '@/lib/routing/RouteGraph'
+import { safeFetch } from '@/lib/fetch-utils'
 import type { Building } from '@/types/map'
+import type L from 'leaflet'
 
 // Component to handle map resize and invalidate size
 function MapResizeHandler() {
@@ -56,15 +62,76 @@ function MapResizeHandler() {
       window.removeEventListener('orientationchange', handleOrientationChange)
     }
   }, [map])
-
   return null
 }
 
-export default function CampusMap() {
+interface CampusMapProps {
+  isSettingLocation?: boolean
+  onLocationSet?: (latlng: L.LatLng) => void
+  targetNodeId?: string | null
+  targetLocation?: { lat: number; lng: number } | null
+  onRouteCalculated?: (distance?: number, hasStairs?: boolean) => void
+}
+
+export default function CampusMap({
+  isSettingLocation,
+  onLocationSet,
+  targetNodeId,
+  targetLocation,
+  onRouteCalculated
+}: CampusMapProps = {}) {
   const [isMounted, setIsMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const { isCreating, setClickedCoordinates, openModal, markersRefreshTrigger } = useMarkerCreation()
-  const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, buildingsRefreshTrigger } = useBuildingCreation()
+  const graphRef = useRef<RouteGraph | null>(new RouteGraph())
+  const [routePreference, setRoutePreference] = useState<'avoid_stairs' | 'no_preference'>('avoid_stairs')
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        type ProfileResp = { profile: import('@/types/database').UserProfile | null }
+        const { data, error } = await safeFetch<ProfileResp>('/api/profile')
+        if (!error && mounted && data?.profile) {
+          const profile = data.profile
+          const asRecord = profile as unknown as Record<string, unknown>
+          const rawPref = typeof asRecord.route_preference === 'string'
+            ? asRecord.route_preference
+            : typeof asRecord.routePreference === 'string'
+            ? asRecord.routePreference
+            : undefined
+
+          if (rawPref === 'no_preference') {
+            setRoutePreference('no_preference')
+          } else {
+            setRoutePreference('avoid_stairs')
+          }
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  // Listen for profile updates dispatched elsewhere (settings page)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent)?.detail as Record<string, unknown> | undefined
+        const rawPref = detail?.route_preference ?? detail?.routePreference
+        if (typeof rawPref === 'string') {
+          if (rawPref === 'no_preference') setRoutePreference('no_preference')
+          else setRoutePreference('avoid_stairs')
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    window.addEventListener('profile-updated', handler as EventListener)
+    return () => window.removeEventListener('profile-updated', handler as EventListener)
+  }, [])
+  const { isCreating, setClickedCoordinates, openModal, newFeature } = useMarkerCreation()
+  const { isCreating: isCreatingBuilding, setClickedCoordinates: setBuildingCoordinates, openModal: openBuildingCreationModal, newBuilding } = useBuildingCreation()
   const { openModal: openBuildingModal, isOpen: isBuildingModalOpen, selectedBuilding, closeModal: closeBuildingModal } = useBuildingModal()
 
   const handleMapClick = useCallback((coordinates: [number, number]) => {
@@ -136,6 +203,7 @@ export default function CampusMap() {
       className="h-full w-full"
       worldCopyJump={false}
       zoomControl={!isMobile}
+      attributionControl={!isMobile}
     >
       <MapResizeHandler />
       <TileLayer
@@ -143,10 +211,23 @@ export default function CampusMap() {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Campus Accessibility Map'
       />
       <BuildingSearchMapControl />
+      <RouteLoader graphRef={graphRef} />
+      <RouteDrawingControl graphRef={graphRef} />
+      {isSettingLocation !== undefined && (
+        <RoutingControl
+          graphRef={graphRef}
+          isSettingLocation={isSettingLocation}
+          onLocationSet={onLocationSet}
+          targetNodeId={targetNodeId ?? null}
+          targetLocation={targetLocation ?? null}
+          onRouteCalculated={onRouteCalculated}
+          routePreference={routePreference}
+        />
+      )}
       <MapClickHandler enabled={isCreating || (!isCreatingBuilding && !!selectedBuilding)} onMapClick={handleMapClick} />
       <BuildingCreationClickHandler enabled={isCreatingBuilding} onMapClick={handleBuildingMapClick} />
-      <AccessibilityMarkers refreshTrigger={markersRefreshTrigger} />
-      <BuildingsPolygons refreshTrigger={buildingsRefreshTrigger} onBuildingClick={handleBuildingClick} />
+      <AccessibilityMarkers newFeature={newFeature} />
+      <BuildingsPolygons newBuilding={newBuilding} onBuildingClick={handleBuildingClick} />
     </MapContainer>
   )
 }

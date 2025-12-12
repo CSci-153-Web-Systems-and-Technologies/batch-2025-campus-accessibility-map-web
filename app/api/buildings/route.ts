@@ -25,7 +25,6 @@ export async function GET(request: Request) {
     const { data, error } = await query
 
     if (error) {
-      console.error('Error fetching buildings:', error)
       return NextResponse.json(
         { error: 'Failed to fetch buildings' },
         { status: 500 }
@@ -34,7 +33,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: data || [] })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -96,7 +94,6 @@ export async function POST(request: Request) {
       .single()
 
     if (error) {
-      console.error('Error creating building:', error)
       return NextResponse.json(
         { error: 'Failed to create building', details: error.message },
         { status: 400 }
@@ -105,7 +102,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -66,11 +66,9 @@ export async function GET(request: Request) {
     ])
 
     if (featuresResult.error) {
-      console.error('Error fetching features:', featuresResult.error)
     }
 
     if (commentsResult.error) {
-      console.error('Error fetching comments:', commentsResult.error)
     }
 
     const comments: CommentContribution[] = (commentsResult.data || []).map((comment: CommentWithFeature) => {
@@ -99,7 +97,6 @@ export async function GET(request: Request) {
       }
     })
   } catch (error) {
-    console.error('Error fetching user contributions:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

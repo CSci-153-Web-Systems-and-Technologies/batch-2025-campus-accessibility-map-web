@@ -136,7 +136,6 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Error updating building:', error)
       return NextResponse.json(
         { error: 'Failed to update building', details: error.message },
         { status: 400 }
@@ -162,7 +161,7 @@ export async function DELETE(
     const { id } = await params
 
     const { data: { user } } = await supabase.auth.getUser()
-
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -193,22 +192,29 @@ export async function DELETE(
       )
     }
 
-    const { error } = await supabase
+    const { data: updateData, error } = await supabase
       .from('buildings')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
+      .select('id, deleted_at')
+      .single()
     
     if (error) {
-      console.error('Error deleting building:', error)
       return NextResponse.json(
-        { error: 'Failed to delete building', details: error.message },
-        { status: 400 }
+        { error: 'Failed to delete building', details: error.message, code: error.code },
+        { status: 500 }
+      )
+    }
+
+    if (!updateData) {
+      return NextResponse.json(
+        { error: 'Update failed: No rows were updated. This may be due to RLS policies.' },
+        { status: 403 }
       )
     }
 
     return NextResponse.json({ message: 'Building deleted successfully' })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

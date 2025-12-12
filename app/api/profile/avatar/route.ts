@@ -54,7 +54,6 @@ export async function POST(request: Request) {
       })
 
     if (uploadError) {
-      console.error('Error uploading avatar to storage:', uploadError)
       return NextResponse.json(
         { error: 'Failed to upload avatar', details: uploadError.message },
         { status: 500 }
@@ -80,7 +79,6 @@ export async function POST(request: Request) {
           await supabase.storage.from(STORAGE_BUCKET).remove([oldFileName])
         }
       } catch (e) {
-        console.error('Error removing old avatar:', e)
       }
     }
 
@@ -96,7 +94,6 @@ export async function POST(request: Request) {
       .single()
 
     if (upsertError) {
-      console.error('Error upserting profile:', upsertError)
       await supabase.storage.from(STORAGE_BUCKET).remove([fileName])
       return NextResponse.json(
         { error: 'Failed to update profile', details: upsertError.message, code: upsertError.code },
@@ -110,7 +107,6 @@ export async function POST(request: Request) {
       },
     }, { status: 200 })
   } catch (error) {
-    console.error('Unexpected error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

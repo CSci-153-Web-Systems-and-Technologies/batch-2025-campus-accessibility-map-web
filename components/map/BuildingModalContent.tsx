@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import type { User } from '@supabase/supabase-js'
 import type { Building, AccessibilityFeature } from '@/types/map'
 import { FeaturePhoto } from './FeaturePhoto'
 import { safeFetch } from '@/lib/fetch-utils'
@@ -10,6 +11,7 @@ import { DEFAULT_FETCH_LIMIT } from '@/lib/constants'
 import { useFeatureModal } from './FeatureModalContext'
 import { useBuildingModal } from './BuildingModalContext'
 import { useAdmin } from '@/lib/hooks/use-admin'
+import { createClient } from '@/lib/supabase/client'
 import { EditDeleteControls } from '@/components/ui/edit-delete-controls'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +19,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { FeatureTypeBadge } from '@/components/ui/feature-type-badge'
 import { X } from 'lucide-react'
+import { RouteToHereButton } from './RouteToHereButton'
+import type L from 'leaflet'
 
 interface BuildingModalContentProps {
   building: Building
@@ -25,6 +29,7 @@ interface BuildingModalContentProps {
 export function BuildingModalContent({ building }: BuildingModalContentProps) {
   const [features, setFeatures] = useState<AccessibilityFeature[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [hasLoadedFeatures, setHasLoadedFeatures] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -37,48 +42,80 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
   const { isAdmin } = useAdmin()
   const { openModal: openFeatureModal } = useFeatureModal()
   const { closeModal } = useBuildingModal()
+  const [user, setUser] = useState<User | null>(null)
+  const isOwner = user?.id && building.created_by && building.created_by === user.id
 
   useEffect(() => {
     if (!building.id) return
 
     const abortController = new AbortController()
+    let isActive = true
 
     async function fetchFeatures() {
       setIsLoading(true)
+      setHasLoadedFeatures(false)
       setError(null)
 
-      const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
-        `/api/features?building_id=${building.id}&limit=${DEFAULT_FETCH_LIMIT}`,
-        { signal: abortController.signal }
-      )
+      try {
+        const { data, error: fetchError } = await safeFetch<ApiFeatureWithPhotos[]>(
+          `/api/features?building_id=${building.id}&limit=${DEFAULT_FETCH_LIMIT}`,
+          { signal: abortController.signal }
+        )
 
-      if (fetchError) {
-        if (fetchError.name !== 'AbortError') {
-          console.error('Error fetching building features:', fetchError)
-          setError(fetchError.message)
+        if (!isActive) return
+
+        if (fetchError) {
+          if (fetchError.name !== 'AbortError') {
+            setError(fetchError.message)
+          }
+          return
         }
+
+        if (data) {
+          const featuresData: AccessibilityFeature[] = data.map(transformApiFeatureToMapFeature)
+          setFeatures(featuresData)
+        }
+      } finally {
+        if (!isActive) return
         setIsLoading(false)
-        return
+        setHasLoadedFeatures(true)
       }
-
-      if (data) {
-        const featuresData: AccessibilityFeature[] = data.map(transformApiFeatureToMapFeature)
-        setFeatures(featuresData)
-      }
-
-      setIsLoading(false)
     }
 
     fetchFeatures()
 
     return () => {
+      isActive = false
       abortController.abort()
     }
   }, [building.id])
 
-  const buildingPhoto = features.length > 0 && features[0].photos && features[0].photos.length > 0
-    ? features[0].photos[0]
-    : null
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+  }, [])
+
+  const [buildingPhotoUrl, setBuildingPhotoUrl] = useState<string | null>(null)
+
+  const buildingPhoto = buildingPhotoUrl
+    ? { full_url: buildingPhotoUrl, photo_url: building.photo_path }
+    : (features.length > 0 && features[0].photos && features[0].photos.length > 0
+      ? features[0].photos[0]
+      : null)
+
+  useEffect(() => {
+    if (!building.photo_path) {
+      setBuildingPhotoUrl(null)
+      return
+    }
+    try {
+      const supabase = createClient()
+      const publicUrl = supabase.storage.from('building-photos').getPublicUrl(building.photo_path).data.publicUrl
+      setBuildingPhotoUrl(publicUrl)
+    } catch (err) {
+      setBuildingPhotoUrl(null)
+    }
+  }, [building.photo_path])
 
   const handleFeatureClick = (feature: AccessibilityFeature) => {
     openFeatureModal(feature)
@@ -120,17 +157,45 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
       }
 
       setIsEditing(false)
-      window.location.reload()
+      // Realtime subscription will update the building automatically
     } catch (error) {
-      console.error('Error updating building:', error)
       alert(error instanceof Error ? error.message : 'Failed to update building. Please try again.')
     } finally {
       setIsSaving(false)
     }
   }, [building.id, editData, isSaving])
 
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
+
+  const handleEditPhotoChange = async (file: File | null) => {
+    setEditPhotoFile(file)
+    if (!file) {
+      setEditPhotoPreview(null)
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => setEditPhotoPreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleUploadEditPhoto = async () => {
+    if (!editPhotoFile) return
+    try {
+      const fd = new FormData()
+      fd.append('file', editPhotoFile)
+      const res = await fetch(`/api/buildings/${building.id}/photos`, { method: 'POST', body: fd })
+      if (!res.ok) throw new Error('Upload failed')
+      setEditPhotoFile(null)
+      setEditPhotoPreview(null)
+      // Realtime subscription will update the building automatically
+    } catch (err) {
+      alert('Failed to upload photo')
+    }
+  }
+
   const handleDelete = useCallback(async () => {
-    if (isDeleting) return
+    if (isDeleting || !isAdmin) return
 
     setIsDeleting(true)
     try {
@@ -143,14 +208,13 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         throw new Error(error.error || 'Failed to delete building')
       }
 
+      // close modal and rely on realtime subscriptions to remove the building from the map
       closeModal()
-      window.location.reload()
     } catch (error) {
-      console.error('Error deleting building:', error)
       alert(error instanceof Error ? error.message : 'Failed to delete building. Please try again.')
       setIsDeleting(false)
     }
-  }, [building.id, isDeleting, closeModal])
+  }, [building.id, isDeleting, closeModal, isAdmin])
 
   return (
     <>
@@ -175,7 +239,11 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         </div>
       )}
       <div className="w-full h-full flex flex-col bg-m3-surface rounded-lg border overflow-hidden relative">
-      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex-shrink-0">
+      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 md:top-4 md:right-4 z-50 flex gap-2 flex-shrink-0">
+        <RouteToHereButton 
+          lat={building.coordinates[0]}
+          lng={building.coordinates[1]}
+        />
         {isAdmin && !isEditing ? (
           <EditDeleteControls
             onEdit={handleEdit}
@@ -205,11 +273,14 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         <div className="p-4 md:p-6 lg:p-8 lg:pr-4 flex items-center justify-center min-w-0 min-h-0">
           <div 
             className="relative w-full h-full flex items-center justify-center bg-m3-surface-variant rounded-xl overflow-hidden border-4 border-m3-outline cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => buildingPhoto && setFullScreenImage(buildingPhoto.full_url || buildingPhoto.photo_url)}
+            onClick={() => {
+              if (!buildingPhoto) return
+              setFullScreenImage((buildingPhoto.full_url ?? buildingPhoto.photo_url) ?? null)
+            }}
           >
             {buildingPhoto ? (
               <FeaturePhoto
-                photoUrl={buildingPhoto.full_url || buildingPhoto.photo_url}
+                photoUrl={(buildingPhoto.full_url ?? buildingPhoto.photo_url) ?? null}
                 alt={building.name}
                 className="w-full h-full"
                 height="100%"
@@ -252,6 +323,25 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
                      disabled={isSaving}
                    />
                  </div>
+                <div>
+                  <Label htmlFor="building-photo">Photo (optional)</Label>
+                  <input
+                    id="building-photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleEditPhotoChange(e.target.files?.[0] || null)}
+                    className="mt-1"
+                  />
+                  {editPhotoPreview && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <img src={editPhotoPreview} alt="Preview" className="w-28 h-20 object-cover rounded-md border" />
+                      <div className="flex gap-2">
+                        <Button onClick={handleUploadEditPhoto} disabled={!editPhotoFile || isSaving}>Upload Photo</Button>
+                        <Button variant="outline" onClick={() => handleEditPhotoChange(null)} disabled={isSaving}>Remove</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                  
                  <div className="flex gap-2">
                    <Button
@@ -273,7 +363,7 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
              ) : (
               <>
                 <div>
-                  <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 text-m3-primary leading-tight">
+                  <h1 className="font-bold text-2xl md:text-3xl mb-2 md:mb-3 mt-8 md:mt-10 text-m3-primary leading-tight">
                     {building.name}
                   </h1>
                 </div>
@@ -304,9 +394,17 @@ export function BuildingModalContent({ building }: BuildingModalContentProps) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 py-4 md:py-5 min-h-0 bg-m3-surface">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-muted-foreground">Loading features...</p>
+          {isLoading || !hasLoadedFeatures ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="relative flex animate-pulse gap-3 p-4 md:p-5 border rounded-xl bg-m3-secondary-container min-h-[112px] md:min-h-[128px]">
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-3/5 rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-full rounded-lg bg-muted/40"></div>
+                    <div className="h-4 w-4/5 rounded-lg bg-muted/40"></div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="flex items-center justify-center h-full">
