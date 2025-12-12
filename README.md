@@ -390,7 +390,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 If you encounter any issues or have questions:
-- Check existing [GitHub Issues]([https://github.com/your-repo](https://github.com/CSci-153-Web-Systems-and-Technologies/batch-2025-campus-accessibility-map-web/issues)
+- Check existing [GitHub Issues](https://github.com/CSci-153-Web-Systems-and-Technologies/batch-2025-campus-accessibility-map-web/issues)
 - Create a new issue with detailed information
 - Contact the development team
 
