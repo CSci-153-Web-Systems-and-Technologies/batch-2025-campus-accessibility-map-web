@@ -95,6 +95,24 @@ export function MarkerCreationForm({ onSuccess, onCancel, initialLat, initialLng
           setIsLoading(false)
           return
         }
+
+        const updatedResponse = await fetch(`/api/features/${featureId}`)
+        const updatedResult = await updatedResponse.json()
+        
+        if (updatedResponse.ok && updatedResult.data) {
+          try {
+            const mapFeature = transformApiFeatureToMapFeature(updatedResult.data as any)
+            addNewFeature(mapFeature)
+          } catch {
+            addNewFeature({
+              ...updatedResult.data,
+              coordinates: [updatedResult.data.latitude, updatedResult.data.longitude],
+              photos: updatedResult.data.photos || [],
+            } as any)
+          }
+          onSuccess()
+          return
+        }
       }
 
       try {
